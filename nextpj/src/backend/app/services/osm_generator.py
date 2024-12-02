@@ -7,7 +7,7 @@ import shutil
 from typing import List, Dict, Any, Optional
 import gzip
 from schemas.scenario import ScenarioRequest
-from math import radians, cos, sin, asin, sqrt
+import math
 
 class OSMScenarioGenerator:
     def __init__(self, output_dir: str):
@@ -62,23 +62,92 @@ class OSMScenarioGenerator:
         self.files[use] = os.path.join(self.output_dir, filename)
         return self.files[use]
 
-    def calculate_selected_area_bounds(self, center: List[float], canvas_rect: List[float]) -> List[float]:
+    def calculate_selected_area_bounds(self, center: List[float], rect: List[float]) -> List[float]:
+        """선택된 영역의 실제 지리적 경계 계산
+        
+        Args:
+            center: [longitude, latitude] 형식의 중심점 좌표
+            rect: [x1, y1, x2, y2] 형식의 정규화된 사각형 좌표
+        
+        Returns:
+            List[float]: [west, south, east, north] 형식의 경계 좌표
         """
-        Calculates geographical bounds based on selected area
-        """
-        lat, lon = center
-        d_lat = canvas_rect[3] - canvas_rect[1]
-        d_lon = canvas_rect[2] - canvas_rect[0]
+        # 선택 영역의 픽셀 크기를 실제 거리로 변환
+        center_lon, center_lat = center
+        width = abs(rect[2] - rect[0])
+        height = abs(rect[3] - rect[1])
 
-        lat_km = 111.0
-        lon_km = cos(radians(lat)) * 111.0
+        # 위도에 따른 경도 거리 보정
+        cos_lat = math.cos(math.radians(center_lat))
+        
+        # 1도당 거리 계산 (약 111km)
+        meters_per_degree = 111000
+        
+        # 실제 거리 기반 오프셋 계산
+        lon_offset = (width * 2000) / (meters_per_degree * cos_lat)  # 경도 보정
+        lat_offset = (height * 2000) / meters_per_degree
 
-        west = lon - (d_lon / 2) / lon_km
-        east = lon + (d_lon / 2) / lon_km
-        south = lat - (d_lat / 2) / lat_km
-        north = lat + (d_lat / 2) / lat_km
+        # 최소/최대 영역 크기 제한
+        MIN_AREA_SIZE = 100  # 미터
+        MAX_AREA_SIZE = 5000  # 미터
+        
+        area_width = width * 2000  # 킬로미터를 미터로 변환
+        area_height = height * 2000
+        
+        if area_width < MIN_AREA_SIZE or area_height < MIN_AREA_SIZE:
+            raise ValueError(f"Selected area too small (minimum size: {MIN_AREA_SIZE}m)")
+        if area_width > MAX_AREA_SIZE or area_height > MAX_AREA_SIZE:
+            raise ValueError(f"Selected area too large (maximum size: {MAX_AREA_SIZE}m)")
+
+        # 경계 좌표 계산
+        west = center_lon - lon_offset
+        east = center_lon + lon_offset
+        south = center_lat - lat_offset
+        north = center_lat + lat_offset
 
         return [west, south, east, north]
+
+    async def generate(self, request: ScenarioRequest) -> List[str]:
+        """시나리오 생성 메인 프로세스
+        
+        Args:
+            request: 시나리오 생성 요청 데이터
+            
+        Returns:
+            List[str]: 생성된 파일들의 경로 목록
+        """
+        try:
+            selected_area = request.selectedArea if request.selectedArea else None
+            
+            # 네트워크 설정 파일 생성
+            self.filename("netccfg", ".netccfg")
+            
+            # OSM 데이터 다운로드
+            self.filename("osm", "_bbox.osm.xml.gz")
+            await self._download_osm_data(request.coordinates, selected_area)
+            
+            # 네트워크 생성
+            self.filename("net", ".net.xml")
+            await self._build_network(
+                self.files['osm'],
+                request.vehicles,
+                request.options,
+                request.roadTypes
+            )
+
+            # 차량 경로 생성
+            route_files = await self._generate_routes(request.vehicles, request.duration)
+            self.route_files = route_files
+
+            # SUMO 설정 파일 생성
+            config_file = await self._create_sumo_config()
+
+            return [self.files["net"], config_file] + route_files
+
+        except Exception as e:
+            print(f"Error in generate: {str(e)}")
+            raise
+
 
     async def generate(self, request: ScenarioRequest, selected_area = None) -> List[str]:
         """
@@ -116,23 +185,34 @@ class OSMScenarioGenerator:
             raise
 
     async def _download_osm_data(self, coordinates: List[float], selected_area = None) -> None:
-        """
-        OpenStreetMap 데이터 다운로드
-        coordinates: 전체 지도의 좌표 범위
-        selected_area: 사용자가 선택한 영역 정보 (있는 경우)
+        """OpenStreetMap 데이터 다운로드
+        
+        Args:
+            coordinates: 전체 지도의 좌표 범위
+            selected_area: 사용자가 선택한 영역 정보
         """
         try:
-            west, south, east, north = coordinates
-            
-            # 선택 영역이 있는 경우, 해당 영역으로 범위 조정
             if selected_area:
-                rect = selected_area['rect']
-                center = selected_area['center']
-                
-                # 선택 영역의 좌표를 실제 지리 좌표로 변환
-                adjusted_bounds = self.calculate_selected_area_bounds(center, rect)
-                west, south, east, north = adjusted_bounds
+                # 선택 영역의 경계 계산
+                bounds = self.calculate_selected_area_bounds(
+                    selected_area.center, 
+                    selected_area.rect
+                )
+                west, south, east, north = bounds
+            else:
+                # 전체 좌표에서 경계 추출
+                lat1, lon1, lat2, lon2 = coordinates
+                west = min(lon1, lon2)
+                south = min(lat1, lat2)
+                east = max(lon1, lon2)
+                north = max(lat1, lat2)
 
+            # 좌표 유효성 검사
+            if not (-180 <= west <= 180 and -180 <= east <= 180 and
+                    -90 <= south <= 90 and -90 <= north <= 90):
+                raise ValueError(f"Coordinates out of range: west={west}, south={south}, east={east}, north={north}")
+
+            # osmGet 실행 인자 구성
             osmArgs = [
                 "-b", f"{west},{south},{east},{north}",
                 "-p", self.prefix,
@@ -140,17 +220,14 @@ class OSMScenarioGenerator:
                 "-z"
             ]
 
+            print(f"Downloading OSM data with arguments: {osmArgs}")
 
-            # 현재 디렉토리 저장
+            # 현재 디렉토리 저장 및 작업 디렉토리 변경
             original_dir = os.getcwd()
             try:
-                # 작업 디렉토리 변경
                 os.chdir(self.output_dir)
-                
-                print(f"Downloading OSM data with arguments: {osmArgs}")  # 디버깅용 출력
                 self.osmGet.get(osmArgs)
                 
-                # 파일 생성 확인
                 if not os.path.exists(self.files['osm']):
                     raise FileNotFoundError(f"OSM data file was not created: {self.files['osm']}")
                     
@@ -159,7 +236,7 @@ class OSMScenarioGenerator:
 
         except Exception as e:
             error_msg = f"Failed to download OSM data: {str(e)}"
-            print(error_msg)  # 오류 정보 출력
+            print(error_msg)
             raise Exception(error_msg)
 
     async def _build_network(self, osm_file: str, vehicles: dict, options: dict, road_types: dict) -> str:
