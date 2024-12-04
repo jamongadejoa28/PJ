@@ -23,7 +23,7 @@ const MapComponent = forwardRef((props, ref) => {
         }),
       ],
       view: new View({
-        center: fromLonLat([13.4, 52.52]), // 베를린 좌표
+        center: fromLonLat([13.4, 52.52]),
         zoom: 16,
       }),
     });
@@ -33,6 +33,7 @@ const MapComponent = forwardRef((props, ref) => {
     return () => initialMap.setTarget(undefined);
   }, []);
 
+  // 지도 관련 모든 필요한 메서드들을 노출시킵니다
   useImperativeHandle(ref, () => ({
     setView: (lon: number, lat: number) => {
       if (mapRef.current) {
@@ -41,6 +42,12 @@ const MapComponent = forwardRef((props, ref) => {
         view.setZoom(16);
       }
     },
+    // 선택 영역 변환에 필요한 메서드들 추가
+    getSize: () => mapRef.current?.getSize(),
+    getCoordinateFromPixel: (pixel: [number, number]) =>
+      mapRef.current?.getCoordinateFromPixel(pixel),
+    // 지도 객체 자체도 제공
+    getMap: () => mapRef.current,
   }));
 
   return <div id="map" ref={mapElement} className="w-full h-full"></div>;

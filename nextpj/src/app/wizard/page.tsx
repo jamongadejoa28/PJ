@@ -385,25 +385,69 @@ export default function WizardPage() {
 
   // Generate scenario handler
   const handleGenerateScenario = async () => {
+    // 시나리오 생성 시작을 사용자에게 알림
     setStatus({ visible: true, text: "Generating scenario...", progress: 0 });
 
     try {
-      // 바운딩 박스 계산
-      const bbox = canvasActive
-        ? [
-            coordinates[0] - (canvasRect[2] - canvasRect[0]) * 0.1, // west
-            coordinates[1] - (canvasRect[3] - canvasRect[1]) * 0.1, // south
-            coordinates[0] + (canvasRect[2] - canvasRect[0]) * 0.1, // east
-            coordinates[1] + (canvasRect[3] - canvasRect[1]) * 0.1, // north
-          ]
-        : [
-            coordinates[0] - 0.01, // west
-            coordinates[1] - 0.01, // south
-            coordinates[0] + 0.01, // east
-            coordinates[1] + 0.01, // north
-          ];
+      let boundingBox;
+      // 사용자가 맵에서 영역을 선택한 경우
+      if (canvasActive && map) {
+        // OpenLayers의 현재 지도 상태 정보 가져오기
+        const view = map.getView();
+        const mapSize = map.getSize();
+        // 현재 보이는 전체 지도 영역의 좌표 계산
+        const extent = view.calculateExtent(mapSize);
 
-      // 차량 설정 변환
+        // canvas에서 선택한 영역의 상대적 비율 값
+        const x1Ratio = canvasRect[0]; // 선택 영역 왼쪽 경계
+        const y1Ratio = canvasRect[1]; // 선택 영역 위쪽 경계
+        const x2Ratio = canvasRect[2]; // 선택 영역 오른쪽 경계
+        const y2Ratio = canvasRect[3]; // 선택 영역 아래쪽 경계
+
+        // 실제 지도 상의 좌표값으로 변환 (Web Mercator 좌표계)
+        const west = extent[0] + (extent[2] - extent[0]) * x1Ratio;
+        const east = extent[0] + (extent[2] - extent[0]) * x2Ratio;
+        // y축은 화면과 지도의 좌표계가 반대이므로 max/min으로 보정
+        const south =
+          extent[1] + (extent[3] - extent[1]) * Math.max(y1Ratio, y2Ratio);
+        const north =
+          extent[1] + (extent[3] - extent[1]) * Math.min(y1Ratio, y2Ratio);
+
+        // Web Mercator (EPSG:3857)에서 WGS84 (EPSG:4326) 좌표계로 변환
+        let [westLon, southLat] = transform(
+          [west, south],
+          "EPSG:3857",
+          "EPSG:4326"
+        );
+        let [eastLon, northLat] = transform(
+          [east, north],
+          "EPSG:3857",
+          "EPSG:4326"
+        );
+
+        // 위도(남북) 값의 순서가 올바른지 확인하고 필요시 교정
+        if (southLat > northLat) {
+          [southLat, northLat] = [northLat, southLat];
+        }
+
+        // 경도(동서) 값의 순서가 올바른지 확인하고 필요시 교정
+        if (westLon > eastLon) {
+          [westLon, eastLon] = [eastLon, westLon];
+        }
+
+        // 최종 선택 영역의 경계 좌표 설정
+        boundingBox = [westLon, southLat, eastLon, northLat];
+
+        // 디버깅을 위한 최종 좌표값 출력
+        console.log("Selected area coordinates:", {
+          west: westLon,
+          south: southLat,
+          east: eastLon,
+          north: northLat,
+        });
+      }
+
+      // 활성화된 차량 설정 정보 변환
       const vehicleSettings = Object.fromEntries(
         vehicles
           .filter((v) => v.enabled)
@@ -417,8 +461,15 @@ export default function WizardPage() {
           ])
       );
 
+      // API 요청에 필요한 데이터 구성
       const requestData = {
-        coordinates: bbox,
+        // 선택된 영역이 없는 경우 중심점 기준으로 기본 영역 설정
+        coordinates: boundingBox || [
+          coordinates[0] - 0.01,
+          coordinates[1] - 0.01,
+          coordinates[0] + 0.01,
+          coordinates[1] + 0.01,
+        ],
         duration: parseInt(duration.toString()),
         options: {
           polygons: options.polygons,
@@ -434,20 +485,27 @@ export default function WizardPage() {
             state.enabledTypes,
           ])
         ),
+        mapView: {
+          center: coordinates,
+          zoom: map?.getView().getZoom(),
+          scale: map?.getView().getResolution(),
+        },
       };
 
+      // 디버깅을 위한 요청 데이터 출력
       console.log(
         "Sending request with data:",
         JSON.stringify(requestData, null, 2)
       );
 
+      // API 서버에 시나리오 생성 요청
       const response = await fetch(
         "http://localhost:8000/api/scenario/generate",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify(requestData),
         }
@@ -455,12 +513,15 @@ export default function WizardPage() {
 
       const data = await response.json();
 
+      // 서버 응답 오류 처리
       if (!response.ok) {
         throw new Error(`Server error: ${data.detail}`);
       }
 
+      // 시나리오 생성 완료 상태 업데이트
       setStatus({ visible: true, text: data.message, progress: 100 });
     } catch (error) {
+      // 오류 발생 시 처리 및 상태 업데이트
       console.error("Error:", error);
       setStatus({
         visible: true,

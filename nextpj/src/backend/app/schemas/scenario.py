@@ -10,6 +10,7 @@ class VehicleSettings(BaseModel):
 class SelectedArea(BaseModel):
     rect: List[float]
     center: List[float]
+    zoom: float
 
 class ScenarioRequest(BaseModel):
     coordinates: List[float]  # [west, south, east, north]
