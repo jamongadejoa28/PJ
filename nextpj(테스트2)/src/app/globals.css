@@ -1,0 +1,124 @@
+/* */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-lg overflow-hidden;
+  }
+}
+
+@layer components {
+  .scenario-button {
+    @apply w-full text-white border-[1.2px] border-[#2C2CA0] cursor-pointer block;
+    @apply bg-[#28A745] font-semibold px-2 py-1 text-sm;
+    background-image: linear-gradient(-180deg, #34D058, #228C3B 90%);
+    --webkit-appearance: none;
+    background-repeat: repeat-x;
+    height: 28px;
+    line-height: 1;  
+  }
+
+  .side {
+    @apply absolute top-0 -right-[250px] w-[250px] h-full transition-[right] duration-200 bg-sumo-primary text-white;
+    z-index: 1000; /* 맵보다 위에 표시되도록 높은 z-index 값 설정 */
+  }
+  
+
+  .map {
+    @apply w-full h-full absolute top-0 left-0;
+  }
+
+  .canvas-overlay {
+    @apply absolute top-0 left-0 cursor-default;
+  }
+
+  .container {
+    @apply bg-sumo-secondary rounded p-2 m-1;
+  }
+
+  .side {
+    @apply absolute top-0 -right-[250px] w-[250px] h-full transition-[right] duration-200 bg-sumo-primary text-white;
+  }
+
+  .side.open {
+    @apply right-0;
+  }
+
+  .tab {
+    @apply w-10 h-10 my-6 -ml-10 text-3xl leading-10 text-center cursor-pointer rounded-l-md bg-sumo-primary;
+  }
+
+  .tab img {
+    @apply w-8 m-1;
+  }
+
+  .tab.open {
+    @apply border-l-4 border-sumo-secondary;
+  }
+
+  .controls {
+    @apply w-0 h-[calc(100%-80px)] absolute top-[80px] right-0 overflow-x-hidden overflow-y-auto transition-[width] duration-200 invisible;
+  }
+  
+
+  .controls.open {
+    @apply w-[250px] visible;
+  }
+
+  .input-field {
+    @apply bg-white text-black rounded px-1 h-6 text-sm border-none;
+  }
+
+  .button-secondary {
+    @apply bg-white text-black rounded px-2 h-6 text-sm hover:bg-gray-100 border border-sumo-secondary;
+  }
+
+  .checkbox {
+    @apply w-4 h-4 rounded border-gray-300;
+  }
+
+  .section-title {
+    @apply text-sm font-medium;
+  }
+
+  .option-label {
+    @apply flex items-center justify-between text-sm;
+  }
+
+  .number-input {
+    @apply w-16 h-6 px-1 rounded bg-white text-black;
+  }
+
+  .export-button {
+    @apply w-full py-2 px-4 bg-gradient-to-b from-green-500 to-green-700 text-white border-none rounded font-semibold cursor-pointer hover:from-green-500 hover:to-green-600;
+  }
+
+  .status-bar {
+    @apply bg-sumo-secondary rounded p-2 mt-2;
+  }
+
+  .status-progress {
+    @apply w-0 h-5 bg-sumo-primary rounded transition-[width] duration-500;
+  }
+
+  .images-container {
+    @apply flex gap-2.5 my-2.5 flex-wrap;
+  }
+
+  .copyright-image {
+    @apply h-6 w-auto;
+  }
+
+  .copyright-link {
+    @apply text-white underline;
+  }
+}
+
+/* Animation for status bar */
+@keyframes progress {
+  0% { width: 0; }
+  100% { width: 100%; }
+}

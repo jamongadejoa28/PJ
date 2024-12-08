@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2024-12-08 21:51:11.118369 by main.py UNKNOWN
+<configuration>
+    <net-file value="/root/myvenv/nextpj/src/backend/data/test.net.xml"/>
+    <output-trip-file value="/root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml"/>
+    <prefix value="passenger_"/>
+    <vehicle-class value="passenger"/>
+    <fringe-factor value="30.0"/>
+    <validate value="True"/>
+    <period value="36.0"/>
+</configuration>
+-->
+
+<!-- generated on 2024-12-08 21:51:11 by Eclipse SUMO duarouter Version 1.21.0
+<duarouterConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="/root/myvenv/nextpj/src/backend/data/test.net.xml"/>
+        <route-files value="/root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml.tmp"/>
+        <alternatives-output value="NUL"/>
+        <write-trips value="true"/>
+    </output>
+
+    <time>
+        <begin value="0.0"/>
+        <end value="3600.0"/>
+    </time>
+
+    <report>
+        <no-warnings value="true"/>
+        <ignore-errors value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+</duarouterConfiguration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="passenger__passenger" vClass="passenger"/>
+    <trip id="passenger_2" type="passenger__passenger" depart="72.00" from="43948501" to="206489381"/>
+    <trip id="passenger_4" type="passenger__passenger" depart="144.00" from="42064236" to="1120029183"/>
+    <trip id="passenger_5" type="passenger__passenger" depart="180.00" from="277654571" to="206489381"/>
+    <trip id="passenger_6" type="passenger__passenger" depart="216.00" from="1120029183" to="170601197"/>
+    <trip id="passenger_7" type="passenger__passenger" depart="252.00" from="43948501" to="206489381"/>
+    <trip id="passenger_8" type="passenger__passenger" depart="288.00" from="277654571" to="206489381"/>
+    <trip id="passenger_12" type="passenger__passenger" depart="432.00" from="70707218" to="170605263"/>
+    <trip id="passenger_13" type="passenger__passenger" depart="468.00" from="170605264" to="170601197"/>
+    <trip id="passenger_15" type="passenger__passenger" depart="540.00" from="70707218" to="42064105-AddedOffRampEdge"/>
+    <trip id="passenger_17" type="passenger__passenger" depart="612.00" from="42064236" to="206489381"/>
+    <trip id="passenger_20" type="passenger__passenger" depart="720.00" from="43948501" to="1120029190"/>
+    <trip id="passenger_21" type="passenger__passenger" depart="756.00" from="277654571" to="170605263"/>
+    <trip id="passenger_23" type="passenger__passenger" depart="828.00" from="170605269" to="170601197"/>
+    <trip id="passenger_24" type="passenger__passenger" depart="864.00" from="43948501" to="170605263"/>
+    <trip id="passenger_25" type="passenger__passenger" depart="900.00" from="42064236" to="170601197"/>
+    <trip id="passenger_26" type="passenger__passenger" depart="936.00" from="277654571" to="43947365-AddedOnRampEdge"/>
+    <trip id="passenger_27" type="passenger__passenger" depart="972.00" from="43948501" to="206489381"/>
+    <trip id="passenger_29" type="passenger__passenger" depart="1044.00" from="277654571" to="170605263"/>
+    <trip id="passenger_32" type="passenger__passenger" depart="1152.00" from="70707218" to="43947365"/>
+    <trip id="passenger_35" type="passenger__passenger" depart="1260.00" from="277654571" to="43947368"/>
+    <trip id="passenger_36" type="passenger__passenger" depart="1296.00" from="70707218" to="170605263"/>
+    <trip id="passenger_37" type="passenger__passenger" depart="1332.00" from="43948501" to="170605263"/>
+    <trip id="passenger_38" type="passenger__passenger" depart="1368.00" from="70707218" to="170605263"/>
+    <trip id="passenger_42" type="passenger__passenger" depart="1512.00" from="42064236" to="170601197"/>
+    <trip id="passenger_46" type="passenger__passenger" depart="1656.00" from="43948501-AddedOffRampEdge" to="170605263"/>
+    <trip id="passenger_49" type="passenger__passenger" depart="1764.00" from="70707218" to="43947365"/>
+    <trip id="passenger_51" type="passenger__passenger" depart="1836.00" from="43948501" to="206489381"/>
+    <trip id="passenger_52" type="passenger__passenger" depart="1872.00" from="277654571" to="206489381"/>
+    <trip id="passenger_53" type="passenger__passenger" depart="1908.00" from="206489379-AddedOnRampEdge" to="170605263"/>
+    <trip id="passenger_54" type="passenger__passenger" depart="1944.00" from="42064236" to="43947369#1"/>
+    <trip id="passenger_55" type="passenger__passenger" depart="1980.00" from="70707218" to="170601197"/>
+    <trip id="passenger_56" type="passenger__passenger" depart="2016.00" from="42064236" to="170601197"/>
+    <trip id="passenger_57" type="passenger__passenger" depart="2052.00" from="70707218" to="43947365"/>
+    <trip id="passenger_58" type="passenger__passenger" depart="2088.00" from="277654571" to="206489381"/>
+    <trip id="passenger_59" type="passenger__passenger" depart="2124.00" from="43948501" to="170601197"/>
+    <trip id="passenger_60" type="passenger__passenger" depart="2160.00" from="43948501" to="206489381"/>
+    <trip id="passenger_61" type="passenger__passenger" depart="2196.00" from="43948501" to="206489381"/>
+    <trip id="passenger_62" type="passenger__passenger" depart="2232.00" from="1118511056" to="170605263"/>
+    <trip id="passenger_64" type="passenger__passenger" depart="2304.00" from="70707218" to="43947365"/>
+    <trip id="passenger_69" type="passenger__passenger" depart="2484.00" from="43948501" to="170601197"/>
+    <trip id="passenger_70" type="passenger__passenger" depart="2520.00" from="42064236" to="206489381"/>
+    <trip id="passenger_71" type="passenger__passenger" depart="2556.00" from="277654571" to="43947365"/>
+    <trip id="passenger_72" type="passenger__passenger" depart="2592.00" from="42064236" to="170601197"/>
+    <trip id="passenger_74" type="passenger__passenger" depart="2664.00" from="277654571" to="170605263"/>
+    <trip id="passenger_76" type="passenger__passenger" depart="2736.00" from="42064236" to="206489381"/>
+    <trip id="passenger_78" type="passenger__passenger" depart="2808.00" from="41844004" to="206489381"/>
+    <trip id="passenger_80" type="passenger__passenger" depart="2880.00" from="1122897134" to="206489381"/>
+    <trip id="passenger_81" type="passenger__passenger" depart="2916.00" from="277654571" to="43947365"/>
+    <trip id="passenger_83" type="passenger__passenger" depart="2988.00" from="277654571" to="206489381"/>
+    <trip id="passenger_86" type="passenger__passenger" depart="3096.00" from="42064236" to="43947365"/>
+    <trip id="passenger_87" type="passenger__passenger" depart="3132.00" from="70707218" to="170601197"/>
+    <trip id="passenger_90" type="passenger__passenger" depart="3240.00" from="43948501" to="206489381"/>
+    <trip id="passenger_91" type="passenger__passenger" depart="3276.00" from="70707218" to="170601197"/>
+    <trip id="passenger_93" type="passenger__passenger" depart="3348.00" from="70707218" to="170601197"/>
+    <trip id="passenger_94" type="passenger__passenger" depart="3384.00" from="277654571" to="170605263"/>
+    <trip id="passenger_96" type="passenger__passenger" depart="3456.00" from="277654571" to="43947365"/>
+    <trip id="passenger_97" type="passenger__passenger" depart="3492.00" from="42064236" to="43947365"/>
+    <trip id="passenger_99" type="passenger__passenger" depart="3564.00" from="70707218-AddedOffRampEdge" to="43947365"/>
+</routes>

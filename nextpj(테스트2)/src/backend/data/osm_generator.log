@@ -1,0 +1,89 @@
+2024-12-08 20:12:30,806 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 20:12:30,816 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 20:12:31,477 - INFO - OSM 데이터 다운로드 성공. 노드 수: 2324, 엣지 수: 2482
+2024-12-08 20:12:32,465 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 20:12:32,561 - ERROR - netconvert 실패: Error: No nodes loaded.
+Quitting (on error).
+
+2024-12-08 20:17:36,342 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 20:17:36,357 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 20:17:37,029 - INFO - OSM 데이터 다운로드 성공. 노드 수: 2324, 엣지 수: 2482
+2024-12-08 20:17:37,996 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 20:17:38,108 - ERROR - netconvert 실패: Error: No nodes loaded.
+Quitting (on error).
+
+2024-12-08 20:18:11,462 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 20:18:11,473 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 20:18:13,805 - INFO - OSM 데이터 다운로드 성공. 노드 수: 330, 엣지 수: 334
+2024-12-08 20:18:13,957 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 20:18:13,962 - INFO - netconvert 명령어: /usr/share/sumo/bin/netconvert --osm-files /root/myvenv/nextpj/src/backend/data/test.osm --output-file /root/myvenv/nextpj/src/backend/data/test.net.xml --geometry.remove --roundabouts.guess --ramps.guess --junctions.join --tls.guess-signals --tls.discard-simple --tls.join --tls.default-type actuated --junctions.corner-detail 5 --output.street-names --output.original-names --precision.geo 2 --geometry.avoid-overlap --geometry.min-dist 1 --remove-edges.isolated
+2024-12-08 20:18:14,127 - INFO - SUMO 네트워크 생성 성공
+2024-12-08 20:18:14,283 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml -b 0 -e 3600 --fringe-factor 30.0 -p 36.0 --vehicle-class passenger --validate
+2024-12-08 20:18:14,568 - INFO - passenger 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml
+2024-12-08 20:18:14,569 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml -b 0 -e 3600 --fringe-factor 20.0 -p 45.0 --vehicle-class truck --validate
+2024-12-08 20:18:14,738 - INFO - truck 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml
+2024-12-08 20:18:14,739 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml -b 0 -e 3600 --fringe-factor 17.0 -p 40.0 --vehicle-class bus --validate
+2024-12-08 20:18:14,949 - INFO - bus 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml
+2024-12-08 20:18:14,951 - INFO - 경로 생성 성공
+2024-12-08 20:18:14,957 - INFO - SUMO 설정 파일 생성 완료: /root/myvenv/nextpj/src/backend/data/test.sumocfg
+2024-12-08 20:18:14,960 - INFO - SUMO 설정 파일 생성 성공
+2024-12-08 20:39:13,146 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 20:39:13,154 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 20:39:13,793 - INFO - OSM 데이터 다운로드 성공. 노드 수: 2324, 엣지 수: 2482
+2024-12-08 20:39:14,544 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 20:39:14,548 - INFO - netconvert 명령어: /usr/share/sumo/bin/netconvert --osm-files /root/myvenv/nextpj/src/backend/data/test.osm --output-file /root/myvenv/nextpj/src/backend/data/test.net.xml --geometry.remove --roundabouts.guess --ramps.guess --junctions.join --tls.guess-signals --tls.discard-simple --tls.join --tls.default-type actuated --junctions.corner-detail 5 --output.street-names --output.original-names --precision.geo 2 --geometry.avoid-overlap --geometry.min-dist 1 --remove-edges.isolated
+2024-12-08 20:39:15,113 - INFO - SUMO 네트워크 생성 성공
+2024-12-08 20:39:15,147 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml -b 0 -e 3600 --fringe-factor 30.0 -p 36.0 --vehicle-class passenger --validate
+2024-12-08 20:39:16,138 - INFO - passenger 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml
+2024-12-08 20:39:16,141 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml -b 0 -e 3600 --fringe-factor 20.0 -p 45.0 --vehicle-class truck --validate
+2024-12-08 20:39:16,980 - INFO - truck 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml
+2024-12-08 20:39:16,982 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml -b 0 -e 3600 --fringe-factor 17.0 -p 40.0 --vehicle-class bus --validate
+2024-12-08 20:39:17,879 - INFO - bus 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml
+2024-12-08 20:39:17,880 - INFO - 경로 생성 성공
+2024-12-08 20:39:17,886 - INFO - SUMO 설정 파일 생성 완료: /root/myvenv/nextpj/src/backend/data/test.sumocfg
+2024-12-08 20:39:17,888 - INFO - SUMO 설정 파일 생성 성공
+2024-12-08 21:36:28,489 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 21:36:28,500 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 21:36:28,834 - INFO - OSM 데이터 다운로드 성공. 노드 수: 330, 엣지 수: 334
+2024-12-08 21:36:28,969 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 21:36:28,974 - INFO - netconvert 명령어: /usr/share/sumo/bin/netconvert --osm-files /root/myvenv/nextpj/src/backend/data/test.osm --output-file /root/myvenv/nextpj/src/backend/data/test.net.xml --geometry.remove --roundabouts.guess --ramps.guess --junctions.join --tls.guess-signals --tls.discard-simple --tls.join --tls.default-type actuated --junctions.corner-detail 5 --output.street-names --output.original-names --precision.geo 2 --geometry.avoid-overlap --geometry.min-dist 1 --remove-edges.isolated
+2024-12-08 21:36:29,122 - INFO - SUMO 네트워크 생성 성공
+2024-12-08 21:36:29,163 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml -b 0 -e 3600 --fringe-factor 30.0 -p 36.0 --vehicle-class passenger --validate
+2024-12-08 21:36:29,370 - INFO - passenger 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml
+2024-12-08 21:36:29,372 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml -b 0 -e 3600 --fringe-factor 20.0 -p 45.0 --vehicle-class truck --validate
+2024-12-08 21:36:29,581 - INFO - truck 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml
+2024-12-08 21:36:29,582 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml -b 0 -e 3600 --fringe-factor 17.0 -p 40.0 --vehicle-class bus --validate
+2024-12-08 21:36:29,792 - INFO - bus 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml
+2024-12-08 21:36:29,792 - INFO - 경로 생성 성공
+2024-12-08 21:36:29,798 - INFO - SUMO 설정 파일 생성 완료: /root/myvenv/nextpj/src/backend/data/test.sumocfg
+2024-12-08 21:36:29,800 - INFO - SUMO 설정 파일 생성 성공
+2024-12-08 21:44:38,715 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 21:44:38,733 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 21:44:39,081 - INFO - OSM 데이터 다운로드 성공. 노드 수: 330, 엣지 수: 334
+2024-12-08 21:44:39,212 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 21:44:39,219 - INFO - netconvert 명령어: /usr/share/sumo/bin/netconvert --osm-files /root/myvenv/nextpj/src/backend/data/test.osm --output-file /root/myvenv/nextpj/src/backend/data/test.net.xml --geometry.remove --roundabouts.guess --ramps.guess --junctions.join --tls.guess-signals --tls.discard-simple --tls.join --tls.default-type actuated --junctions.corner-detail 5 --output.street-names --output.original-names --precision.geo 2 --geometry.avoid-overlap --geometry.min-dist 1 --remove-edges.isolated
+2024-12-08 21:44:39,346 - INFO - SUMO 네트워크 생성 성공
+2024-12-08 21:44:39,384 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml -b 0 -e 3600 --fringe-factor 30.0 -p 36.0 --vehicle-class passenger --validate
+2024-12-08 21:44:39,589 - INFO - passenger 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml
+2024-12-08 21:44:39,591 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml -b 0 -e 3600 --fringe-factor 20.0 -p 45.0 --vehicle-class truck --validate
+2024-12-08 21:44:39,799 - INFO - truck 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml
+2024-12-08 21:44:39,801 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml -b 0 -e 3600 --fringe-factor 17.0 -p 40.0 --vehicle-class bus --validate
+2024-12-08 21:44:40,005 - INFO - bus 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml
+2024-12-08 21:44:40,007 - INFO - 경로 생성 성공
+2024-12-08 21:44:40,016 - INFO - SUMO 설정 파일 생성 완료: /root/myvenv/nextpj/src/backend/data/test.sumocfg
+2024-12-08 21:44:40,018 - INFO - SUMO 설정 파일 생성 성공
+2024-12-08 21:51:10,239 - INFO - Data directory set to: /root/myvenv/nextpj/src/backend/data
+2024-12-08 21:51:10,251 - INFO - 도로 타입 필터링 적용: ["highway"~"motorway"]
+2024-12-08 21:51:10,632 - INFO - OSM 데이터 다운로드 성공. 노드 수: 330, 엣지 수: 334
+2024-12-08 21:51:10,766 - INFO - OSM 파일 저장 성공: /root/myvenv/nextpj/src/backend/data/test.osm
+2024-12-08 21:51:10,769 - INFO - netconvert 명령어: /usr/share/sumo/bin/netconvert --osm-files /root/myvenv/nextpj/src/backend/data/test.osm --output-file /root/myvenv/nextpj/src/backend/data/test.net.xml --geometry.remove --roundabouts.guess --ramps.guess --junctions.join --tls.guess-signals --tls.discard-simple --tls.join --tls.default-type actuated --junctions.corner-detail 5 --output.street-names --output.original-names --precision.geo 2 --geometry.avoid-overlap --geometry.min-dist 1 --remove-edges.isolated
+2024-12-08 21:51:10,895 - INFO - SUMO 네트워크 생성 성공
+2024-12-08 21:51:10,933 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml -b 0 -e 3600 --fringe-factor 30.0 -p 36.0 --vehicle-class passenger --prefix passenger_ --validate
+2024-12-08 21:51:11,118 - INFO - passenger 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.passenger.trips.xml
+2024-12-08 21:51:11,120 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml -b 0 -e 3600 --fringe-factor 20.0 -p 45.0 --vehicle-class truck --prefix truck_ --validate
+2024-12-08 21:51:11,291 - INFO - truck 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.truck.trips.xml
+2024-12-08 21:51:11,292 - INFO - Running randomTrips with options: -n /root/myvenv/nextpj/src/backend/data/test.net.xml -o /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml -b 0 -e 3600 --fringe-factor 17.0 -p 40.0 --vehicle-class bus --prefix bus_ --validate
+2024-12-08 21:51:11,458 - INFO - bus 차량 경로 생성 완료: /root/myvenv/nextpj/src/backend/data/test.bus.trips.xml
+2024-12-08 21:51:11,459 - INFO - 경로 생성 성공
+2024-12-08 21:51:11,463 - INFO - SUMO 설정 파일 생성 완료: /root/myvenv/nextpj/src/backend/data/test.sumocfg
+2024-12-08 21:51:11,465 - INFO - SUMO 설정 파일 생성 성공
