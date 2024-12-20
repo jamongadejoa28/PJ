@@ -1,15 +1,19 @@
 # src/backend/app/routers/scenario.py
 
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi.responses import StreamingResponse
 import json
-from typing import Dict, Any, AsyncGenerator
-from app.services.osm_generator import OSMGenerator
-from app.services.simulation_runner import SimulationRunner
-from app.schemas.scenario import ScenarioRequest
+from pydantic import BaseModel
+from typing import AsyncGenerator
+from services.osm_generator import OSMGenerator
+from services.simulation_runner import SimulationRunner
+from schemas.scenario import ScenarioRequest
 import logging
 
 router = APIRouter()
+
+class SimulationRequest(BaseModel):
+    duration: int
 
 # 의존성 주입을 위한 함수
 def get_osm_generator() -> OSMGenerator:
@@ -40,19 +44,20 @@ async def generate_scenario(
         }
     )
 
+   
 @router.post("/simulate")
 async def start_simulation(
-    duration: int,
-    simulation_runner: SimulationRunner = Depends(get_simulation_runner)
-) -> JSONResponse:
+    request: SimulationRequest,
+    background_tasks: BackgroundTasks,
+    executor: SimulationRunner = Depends(get_simulation_runner)
+):
     try:
-        # 시뮬레이션을 비동기적으로 실행
-        success = await simulation_runner.run_async(duration=duration)
-        if not success:
-            raise HTTPException(status_code=500, detail="Simulation failed")
-        return {"status": "success"}
-    except HTTPException as he:
-        raise he
+        background_tasks.add_task(
+            executor.run_simulation,
+            duration = request.duration
+        )
+        
+        return {"message": "시뮬레이션이 시작되었습니다."}
     except Exception as e:
-        logging.error(f"Error in start_simulation: {str(e)}")
-        raise HTTPException(status_code=500, detail="An error occurred while running the simulation.")
+        raise HTTPException(status_code=500, detail=str(e))
+    
