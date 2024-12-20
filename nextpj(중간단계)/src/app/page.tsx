@@ -1,52 +1,23 @@
-// src/app/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { Map, MapMarker } from "react-kakao-maps-sdk";
+import {
+  RoadCategory,
+  VehicleType,
+  VehicleSettings,
+  ScenarioOptions
+} from "@/types/simulation";
 import VehicleSettings from "./components/VehicleSettings";
+import VehicleMarkers from "./components/VehicleMarkers";
 import RoadTypes from "./components/RoadTypes";
 import Copyright from "./components/Copyright";
-import type { VehicleType, VehicleData } from "./components/VehicleSettings";
-import type {
-  RoadCategory,
-  RoadType,
-  HighwayType,
-  PedestrianType,
-  RailwayType,
-  AerowayType,
-  WaterwayType,
-  AerialwayType,
-  RouteType,
-} from "./components/RoadTypes";
 
 declare global {
   interface Window {
     kakao: any;
   }
 }
-
-interface RoadTypeState {
-  allTypes: RoadType[]; // 해당 카테고리의 모든 타입
-  enabledTypes: RoadType[]; // 현재 활성화된 타입들
-}
-
-type RoadTypeStateMap = {
-  [K in RoadCategory]: RoadTypeState;
-};
-
-type MouseState = {
-  x: number;
-  y: number;
-  area: string | null;
-};
-
-type Options = {
-  polygons: boolean;
-  publicTransport: boolean;
-  carOnlyNetwork: boolean;
-  decal: boolean;
-  leftHand: boolean;
-};
 
 type VehicleClass = {
   display: string;
@@ -56,86 +27,88 @@ type VehicleClass = {
   enabled: boolean;
 };
 
-type RoadCategoryMap = {
-  [K in RoadCategory]: RoadType[];
+type RoadTypeState = {
+  allTypes: string[];
+  enabledTypes: string[];
 };
 
-// Constants
+type RoadTypeStateMap = Record<RoadCategory, RoadTypeState>;
+
 const vehicleClasses: VehicleClass[] = [
   {
     display: "Cars",
-    internal: "passenger",
+    internal: VehicleType.Passenger,
     fringeFactor: 5,
     count: 12,
     enabled: true,
   },
   {
     display: "Trucks",
-    internal: "truck",
+    internal: VehicleType.Truck,
     fringeFactor: 5,
     count: 8,
     enabled: false,
   },
   {
     display: "Bus",
-    internal: "bus",
+    internal: VehicleType.Bus,
     fringeFactor: 5,
     count: 4,
     enabled: false,
   },
   {
     display: "Motorcycles",
-    internal: "motorcycle",
+    internal: VehicleType.Motorcycle,
     fringeFactor: 2,
     count: 4,
     enabled: false,
   },
   {
     display: "Bicycles",
-    internal: "bicycle",
+    internal: VehicleType.Bicycle,
     fringeFactor: 2,
     count: 6,
     enabled: false,
   },
   {
     display: "Pedestrians",
-    internal: "pedestrian",
+    internal: VehicleType.Pedestrian,
     fringeFactor: 1,
     count: 10,
     enabled: false,
   },
   {
     display: "Trams",
-    internal: "tram",
+    internal: VehicleType.Tram,
     fringeFactor: 20,
     count: 2,
     enabled: false,
   },
   {
     display: "Urban trains",
-    internal: "rail_urban",
+    internal: VehicleType.RailUrban,
     fringeFactor: 40,
     count: 2,
     enabled: false,
   },
   {
     display: "Trains",
-    internal: "rail",
+    internal: VehicleType.Rail,
     fringeFactor: 40,
     count: 2,
     enabled: false,
   },
   {
     display: "Ships",
-    internal: "ship",
+    internal: VehicleType.Ship,
     fringeFactor: 40,
     count: 2,
     enabled: false,
   },
 ];
 
-const roadCategories: RoadCategoryMap = {
-  Highway: [
+const roadCategories: Record<RoadCategory, string[]> = {
+  [RoadCategory.Highway]: [
     "motorway",
     "trunk",
     "primary",
@@ -148,8 +121,8 @@ const roadCategories: RoadCategoryMap = {
     "service",
     "raceway",
     "bus_guideway",
-  ] as HighwayType[],
-  Pedestrians: [
+  ],
+  [RoadCategory.Pedestrians]: [
     "track",
     "footway",
     "pedestrian",
@@ -159,8 +132,8 @@ const roadCategories: RoadCategoryMap = {
     "step",
     "steps",
     "stairs",
-  ] as PedestrianType[],
-  Railway: [
+  ],
+  [RoadCategory.Railway]: [
     "preserved",
     "tram",
     "subway",
@@ -168,24 +141,24 @@ const roadCategories: RoadCategoryMap = {
     "rail",
     "highspeed",
     "monorail",
-  ] as RailwayType[],
-  Aeroway: [
+  ],
+  [RoadCategory.Aeroway]: [
     "stopway",
     "parking_position",
     "taxiway",
     "taxilane",
     "runway",
     "highway_strip",
-  ] as AerowayType[],
-  Waterway: ["river", "canal"] as WaterwayType[],
-  Aerialway: ["cable_car", "gondola"] as AerialwayType[],
-  Route: ["ferry"] as RouteType[],
+  ],
+  [RoadCategory.Waterway]: ["river", "canal"],
+  [RoadCategory.Aerialway]: ["cable_car", "gondola"],
+  [RoadCategory.Route]: ["ferry"],
 };
 
 export default function MainPage() {
-  // States
   const [activeTab, setActiveTab] = useState<number | null>(0);
   const [map, setMap] = useState<any>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
   const [duration, setDuration] = useState(3600);
   const [radius, setRadius] = useState(1000);
@@ -193,7 +166,7 @@ export default function MainPage() {
     isRunning: false,
     error: false,
   });
-  const [options, setOptions] = useState<Options>({
+  const [options, setOptions] = useState<ScenarioOptions>({
     polygons: true,
     publicTransport: false,
     carOnlyNetwork: false,
@@ -212,35 +185,99 @@ export default function MainPage() {
     progress: 0,
   });
 
-  // 초기 RoadTypeStateMap 설정
   const initialRoadTypeState: RoadTypeStateMap = Object.entries(
     roadCategories
-  ).reduce((acc, [category, types]) => {
-    acc[category as RoadCategory] = {
-      allTypes: [...types],
-      enabledTypes: [], // 초기화 시 빈 배열
-    };
-    return acc;
-  }, {} as RoadTypeStateMap);
+  ).reduce(
+    (acc, [category, types]) => ({
+      ...acc,
+      [category]: {
+        allTypes: [...types],
+        enabledTypes: [],
+      },
+    }),
+    {} as RoadTypeStateMap
+  );
 
-  // RoadTypeStateMap 상태 관리
   const [roadTypeStates, setRoadTypeStates] =
     useState<RoadTypeStateMap>(initialRoadTypeState);
 
-  // enabledRoadTypes를 roadTypeStates에서 추출
-  const enabledRoadTypes: Record<RoadCategory, RoadType[]> = Object.fromEntries(
+  const enabledRoadTypes = Object.fromEntries(
     Object.entries(roadTypeStates).map(([category, state]) => [
       category,
       state.enabledTypes,
     ])
-  ) as Record<RoadCategory, RoadType[]>;
+  ) as Record<RoadCategory, string[]>;
 
-  // 주소 검색 핸들러
+  // Map initialization
+  useEffect(() => {
+    if (document.getElementById("map")) {
+      const script = document.createElement("script");
+      script.src =
+        "//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=services&autoload=false";
+      script.async = true;
+      document.head.appendChild(script);
+
+      script.onload = () => {
+        window.kakao.maps.load(() => {
+          const container = document.getElementById("map");
+          const optionsMap = {
+            center: new window.kakao.maps.LatLng(
+              coordinates.lat,
+              coordinates.lng
+            ),
+            level: 3,
+          };
+          const mapInstance = new window.kakao.maps.Map(container, optionsMap);
+          setMap(mapInstance);
+
+          window.kakao.maps.event.addListener(
+            mapInstance,
+            "click",
+            (mouseEvent: any) => {
+              const latlng = mouseEvent.latLng;
+
+              if (marker) {
+                marker.setMap(null);
+              }
+              const newMarker = new window.kakao.maps.Marker({
+                position: latlng,
+              });
+              newMarker.setMap(mapInstance);
+              setMarker(newMarker);
+
+              setCoordinates({
+                lat: latlng.getLat(),
+                lng: latlng.getLng(),
+              });
+
+              const geocoder = new window.kakao.maps.services.Geocoder();
+              geocoder.coord2Address(
+                latlng.getLng(),
+                latlng.getLat(),
+                (result: any, status: any) => {
+                  if (status === window.kakao.maps.services.Status.OK) {
+                    setAddress(result[0].address.address_name);
+                  }
+                }
+              );
+            }
+          );
+        });
+      };
+
+      return () => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      };
+    }
+  }, [marker, coordinates.lat, coordinates.lng]);
+
   const handleSearch = () => {
-    const geocoder = new kakao.maps.services.Geocoder();
+    const geocoder = new window.kakao.maps.services.Geocoder();
 
     geocoder.addressSearch(address, (result, status) => {
-      if (status === kakao.maps.services.Status.OK) {
+      if (status === window.kakao.maps.services.Status.OK) {
         const coords = {
           lat: parseFloat(result[0].y),
           lng: parseFloat(result[0].x),
@@ -256,8 +293,10 @@ export default function MainPage() {
     });
   };
 
-  // 차량 설정 변경 핸들러
-  const handleVehicleChange = (internal: VehicleType, data: VehicleData) => {
+  const handleVehicleChange = (
+    internal: VehicleType,
+    data: VehicleSettings
+  ) => {
     setVehicles((prev) =>
       prev.map((vehicle) =>
         vehicle.internal === internal ? { ...vehicle, ...data } : vehicle
@@ -265,21 +304,19 @@ export default function MainPage() {
     );
   };
 
-  // 도로 타입 변경 핸들러
   const handleRoadTypeChange = (
     category: RoadCategory,
-    enabledTypes: RoadType[]
+    enabledTypes: string[]
   ) => {
     setRoadTypeStates((prev) => ({
       ...prev,
       [category]: {
         ...prev[category],
-        enabledTypes: enabledTypes,
+        enabledTypes,
       },
     }));
   };
 
-  // 시나리오 생성 핸들러
   const handleGenerateScenario = async () => {
     setStatus({
       visible: true,
@@ -294,9 +331,9 @@ export default function MainPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            coordinates: coordinates,
-            radius: radius,
-            duration: duration,
+            coordinates,
+            radius,
+            duration,
             vehicles: vehicles.reduce(
               (acc, v) => ({
                 ...acc,
@@ -314,51 +351,40 @@ export default function MainPage() {
                 state.enabledTypes,
               ])
             ),
-            options: options,
+            options,
           }),
         }
       );
 
-      if (!response.body) throw new Error("Failed to read response");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("Failed to read response");
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        let boundary = buffer.indexOf("\n\n");
+        const decodedValue = new TextDecoder().decode(value);
+        const data = JSON.parse(decodedValue);
 
-        while (boundary !== -1) {
-          const chunk = buffer.slice(0, boundary).replace(/^data: /, "");
-          buffer = buffer.slice(boundary + 2);
-          if (chunk) {
-            const data = JSON.parse(chunk);
-            setStatus({
-              visible: true,
-              text: data.message,
-              progress: data.progress,
-            });
-          }
-          boundary = buffer.indexOf("\n\n");
-        }
+        setStatus({
+          visible: true,
+          text: data.message,
+          progress: data.progress,
+        });
       }
-    } catch (error: any) {
+    } catch (error) {
       setStatus({
         visible: true,
         text: "Error",
         progress: 0,
       });
     }
+
     setTimeout(() => {
       setStatus({ visible: false, text: "", progress: 0 });
     }, 2000);
   };
 
-  // 시뮬레이션 시작 핸들러
   const handleStartSimulation = async () => {
     setSimulationStatus({ isRunning: true, error: false });
 
@@ -367,40 +393,44 @@ export default function MainPage() {
         "http://localhost:8000/api/scenario/simulate",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ duration: duration }),
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ duration }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Simulation failed");
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "시뮬레이션 실행에 실패했습니다.");
       }
 
       const data = await response.json();
-      if (data.status !== "success") {
-        throw new Error("Simulation failed");
+
+      if (data.status === "success") {
+        alert(data.message || "시뮬레이션이 성공적으로 완료되었습니다.");
+        setSimulationStatus({ isRunning: false, error: false });
+      } else {
+        throw new Error(
+          data.message || "시뮬레이션 실행 중 오류가 발생했습니다."
+        );
       }
     } catch (error) {
+      console.error("시뮬레이션 에러:", error);
       setSimulationStatus({ isRunning: false, error: true });
+
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("알 수 없는 오류가 발생했습니다.");
+      }
+
       setTimeout(() => {
         setSimulationStatus({ isRunning: false, error: false });
       }, 2000);
     }
   };
-
-  // 차량 설정을 객체로 변환
-  const vehicleSettings = Object.fromEntries(
-    vehicles
-      .filter((v) => v.enabled)
-      .map((v) => [
-        v.internal,
-        {
-          count: parseFloat(v.count.toString()),
-          fringeFactor: parseFloat(v.fringeFactor.toString()),
-          enabled: true,
-        },
-      ])
-  );
 
   return (
     <main className="w-full h-screen relative">
@@ -408,17 +438,15 @@ export default function MainPage() {
         center={{ lat: coordinates.lat, lng: coordinates.lng }}
         style={{ width: "100%", height: "100%" }}
         level={3}
+        onCreate={setMapInstance}
         onClick={(_, mouseEvent) => {
           const latlng = mouseEvent.latLng;
-
-          // 좌표 업데이트
           setCoordinates({
             lat: latlng.getLat(),
             lng: latlng.getLng(),
           });
 
-          // 클릭한 위치의 주소 가져오기
-          const geocoder = new kakao.maps.services.Geocoder();
+          const geocoder = new window.kakao.maps.services.Geocoder();
           geocoder.coord2Address(
             latlng.getLng(),
             latlng.getLat(),
@@ -432,6 +460,7 @@ export default function MainPage() {
       >
         <MapMarker position={coordinates} />
       </Map>
+
       <div className={`side ${activeTab !== null ? "open" : ""}`}>
         <div className="flex flex-col">
           {[
@@ -459,9 +488,7 @@ export default function MainPage() {
           ))}
         </div>
 
-        {/* 탭 내용 */}
         <div className={`controls ${activeTab === 0 ? "open" : ""}`}>
-          {/* Position 섹션 */}
           <div className="container">
             <h4 className="section-title mb-2">Position</h4>
             <div className="space-y-2">
@@ -492,7 +519,6 @@ export default function MainPage() {
             </div>
           </div>
 
-          {/* Options 섹션 */}
           <div className="container mt-5">
             <h4 className="section-title mb-2">Options</h4>
             <div className="space-y-2">
@@ -540,7 +566,6 @@ export default function MainPage() {
           </div>
         </div>
 
-        {/* Vehicles 탭 내용 */}
         <div className={`controls ${activeTab === 1 ? "open" : ""}`}>
           {vehicles.map((vehicle) => (
             <VehicleSettings
@@ -555,21 +580,17 @@ export default function MainPage() {
           ))}
         </div>
 
-        {/* Road Types 탭 내용 */}
         <div className={`controls ${activeTab === 2 ? "open" : ""}`}>
-          {/* RoadTypes를 한 번만 렌더링 */}
           <RoadTypes
             initialEnabled={enabledRoadTypes}
             onChange={handleRoadTypeChange}
           />
         </div>
 
-        {/* Copyright 탭 내용 */}
         <div className={`controls ${activeTab === 3 ? "open" : ""}`}>
           <Copyright />
         </div>
 
-        {/* 고정 하단 섹션 */}
         <div className="absolute top-[10px] right-[10px] w-[calc(100%-20px)]">
           {!status.visible ? (
             <div className="space-y-1">
