@@ -1,47 +1,50 @@
 # src/backend/app/services/simulation_runner.py
 
 import os
-import subprocess
-import logging
-from typing import Optional
 import asyncio
+import glob
+from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SimulationRunner:
     def __init__(self, data_dir: str):
-        """
-        SimulationRunner 초기화
+        # PROJECT_ROOT를 정의하여 절대 경로 생성
+        self.PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+        self.data_dir = os.path.join(self.PROJECT_ROOT, "data")
+        if not os.path.exists(self.data_dir):
+            raise FileNotFoundError(f"Data directory not found: {self.data_dir}")
+        self.current_process: Optional[asyncio.subprocess.Process] = None
 
-        Args:
-            data_dir (str): SUMO 데이터 파일들이 위치한 디렉토리 경로
-        """
-        self.data_dir = data_dir
-        self.config_file = os.path.join(self.data_dir, "test.sumocfg")
-        
-        # 로깅 설정
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(os.path.join(self.data_dir, 'simulation_runner.log')),
-                logging.StreamHandler()
-            ]
-        )
-        self.logger = logging.getLogger(__name__)
+    async def find_sumocfg_file(self) -> str:
+        # 절대 경로 사용
+        config_files = glob.glob(os.path.join(self.data_dir, "*.sumocfg"))
+        if not config_files:
+            raise FileNotFoundError(f"No .sumocfg file found in directory: {self.data_dir}")
+        return config_files[0]
+    
+    async def _handle_stream(self, stream: asyncio.StreamReader, prefix: str):
+        while True:
+            line = await stream.readline()
+            if not line:
+                break
+            try:
+                decoded_line = line.decode('utf-8').strip()
+            except UnicodeDecodeError:
+                decoded_line = line.decode('cp949', errors='replace').strip()
+            
+            # 로그 출력
+            logger.info(f"{prefix}: {decoded_line}")
 
-    async def run_async(self, duration: int, max_teleport: Optional[int] = -1) -> bool:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.run, duration, max_teleport)
-
-    def run(self, duration: int, max_teleport: Optional[int] = -1) -> bool:
+    async def run_simulation(self, duration: int, max_teleport: Optional[int] = -1) -> bool:
         try:
-            # 설정 파일 존재 여부 확인
-            if not os.path.exists(self.config_file):
-                raise FileNotFoundError(f"SUMO config file not found at: {self.config_file}")
-
-            # SUMO 실행 명령어 구성
+            config_file = await self.find_sumocfg_file()
+            
+            # SUMO 명령어 구성
             cmd = [
                 "sumo",
-                "-c", self.config_file,
+                "-c", config_file,
                 "--waiting-time-memory", "100",
                 "--time-to-teleport", str(max_teleport),
                 "--end", str(duration),
@@ -54,26 +57,26 @@ class SimulationRunner:
                 "--fcd-output", os.path.join(self.data_dir, "fcd_output.xml")
             ]
 
-            self.logger.info(f"Executing command: {' '.join(cmd)}")
+            # 시뮬레이션 프로세스 실행
+            self.current_process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
 
-            # SUMO 프로세스 실행
-            process = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            # stdout과 stderr 스트림 처리를 위한 태스크 생성
+            stdout_task = asyncio.create_task(self._handle_stream(self.current_process.stdout, "STDOUT"))
+            stderr_task = asyncio.create_task(self._handle_stream(self.current_process.stderr, "STDERR"))
 
-            # 실행 결과 확인
-            if process.returncode == 0:
-                self.logger.info("Simulation completed successfully.")
-                self.logger.debug(f"Simulation output: {process.stdout}")
-                return True
-            else:
-                self.logger.error(f"Simulation failed with return code {process.returncode}: {process.stderr}")
-                return False
+            # 프로세스 완료 대기
+            return_code = await self.current_process.wait()
 
-        except FileNotFoundError as fnf_error:
-            self.logger.error(fnf_error)
-            return False
-        except subprocess.CalledProcessError as cpe:
-            self.logger.error(f"Simulation process failed: {cpe.stderr}")
-            return False
+            # 출력 스트림 태스크 완료 대기
+            await stdout_task
+            await stderr_task
+
+            return return_code
+
         except Exception as e:
-            self.logger.error(f"Error running simulation: {str(e)}")
-            return False
+            logger.error(f"Simulation execution error: {str(e)}")
+            raise
