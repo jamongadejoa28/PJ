@@ -29,30 +29,10 @@ class SimulationRunner:
         self.logger = logging.getLogger(__name__)
 
     async def run_async(self, duration: int, max_teleport: Optional[int] = -1) -> bool:
-        """
-        비동기적으로 시뮬레이션을 실행합니다.
-
-        Args:
-            duration (int): 시뮬레이션 종료 시간 (초 단위)
-            max_teleport (Optional[int], optional): 차량의 텔레포트 최대 시간. 기본값은 -1 (무제한).
-
-        Returns:
-            bool: 시뮬레이션 실행 성공 여부
-        """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.run, duration, max_teleport)
 
     def run(self, duration: int, max_teleport: Optional[int] = -1) -> bool:
-        """
-        SUMO 시뮬레이션을 실행합니다.
-
-        Args:
-            duration (int): 시뮬레이션 종료 시간 (초 단위)
-            max_teleport (Optional[int], optional): 차량의 텔레포트 최대 시간. 기본값은 -1 (무제한).
-
-        Returns:
-            bool: 시뮬레이션 실행 성공 여부
-        """
         try:
             # 설정 파일 존재 여부 확인
             if not os.path.exists(self.config_file):
@@ -60,14 +40,18 @@ class SimulationRunner:
 
             # SUMO 실행 명령어 구성
             cmd = [
-                "sumo",  # CLI 모드로 실행
+                "sumo",
                 "-c", self.config_file,
                 "--waiting-time-memory", "100",
                 "--time-to-teleport", str(max_teleport),
                 "--end", str(duration),
                 "--max-depart-delay", str(duration),
                 "--quit-on-end", "true",
-                "--verbose", "true"  # 디버깅을 위한 상세 로그 출력
+                "--device.rerouting.mode", "8",
+                "--default.carfollowmodel", "EIDM",
+                "--device.rerouting.probability", "1",
+                "--ignore-route-errors", "true",
+                "--fcd-output", os.path.join(self.data_dir, "fcd_output.xml")
             ]
 
             self.logger.info(f"Executing command: {' '.join(cmd)}")
