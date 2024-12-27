@@ -1,8 +1,8 @@
-# src/backend/service/simluation_runner.py
+# src/backend/app/service/simulation_runner.py
 
-from pyproj import Proj, Transformer
+from pyproj import Transformer
 from fastapi import WebSocket
-from typing import Optional
+from typing import Optional, Dict, Any
 import os, sys, traceback, logging, glob, traci, json, asyncio, gzip, xml.etree.ElementTree as ET
 from starlette.websockets import WebSocketDisconnect
 
@@ -13,12 +13,28 @@ class SimulationRunner:
         config_files = glob.glob(os.path.join(self.data_dir, "*.sumocfg"))
         self.config_file = config_files[0] if config_files else None
         
+        # 제어 관련 상태 변수 초기화
+        self.motorway_links = []  # 고속도로 진입로 목록
+        self.simulation_speed = 8.0  # 기본 시뮬레이션 속도
+        self.block_motorway = False  # 도로 차단 상태
+        self.carType = ["passenger", "truck", "bus", "motorcycle", "bicycle"]
+        self.control_status = {
+            "speed_applied": False,
+            "block_applied": False
+        }
+        self.last_control_time = 0  # 마지막 제어 적용 시간
+        self.control_interval = 1.0  # 제어 적용 간격 (초)
+
         # 로깅 설정
+        log_file = os.path.join(self.data_dir, 'simulation_runner.log')
+        if os.path.exists(log_file):
+            os.remove(log_file)  
+            
         logging.basicConfig(
-            level=logging.DEBUG,
+            level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(os.path.join(self.data_dir, 'simulation_runner.log')),
+                logging.FileHandler(log_file),
                 logging.StreamHandler(sys.stdout)
             ]
         )
@@ -26,12 +42,12 @@ class SimulationRunner:
         
         # 좌표 변환 설정
         self.transformer = Transformer.from_crs(
-            "+proj=utm +zone=52 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",  # UTM Zone 52N
-            "EPSG:4326",  # WGS84
-            always_xy=True  # x,y (경도,위도) 순서 사용
+            "+proj=utm +zone=52 +ellps=WGS84 +datum=WGS84 +units=m +no_defs", 
+            "EPSG:4326",
+            always_xy=True
         )
         
-         # netOffset 값을 XML 파일에서 읽어서 center 값으로 설정
+        # netOffset 값 설정 및 도로 네트워크 정보 로드
         net_file_path = os.path.join(self.data_dir, "osm.net.xml.gz")
         if not os.path.exists(net_file_path):
             raise FileNotFoundError(f"필수 네트워크 파일을 찾을 수 없습니다: {net_file_path}")
@@ -41,7 +57,6 @@ class SimulationRunner:
                 tree = ET.parse(gz_file)
                 root = tree.getroot()
                 location = root.find('location')
-                
                 if location is None:
                     raise ValueError("XML 파일에서 location 요소를 찾을 수 없습니다")
                     
@@ -49,34 +64,73 @@ class SimulationRunner:
                 if not net_offset:
                     raise ValueError("location 요소에서 netOffset 속성을 찾을 수 없습니다")
                     
-                # netOffset 값의 부호를 반전하여 center 값으로 설정
                 offset_x, offset_y = map(float, net_offset.split(','))
-                self.center_x = -offset_x  # netOffset 값의 부호를 반전
-                self.center_y = -offset_y  # netOffset 값의 부호를 반전
+                self.center_x = -offset_x  
+                self.center_y = -offset_y  
                 
-                self.logger.info(f"XML 파일에서 center 값을 설정했습니다: x={self.center_x}, y={self.center_y}")
+                # 고속도로 진입로 정보 로드
+                for edge in root.findall('.//edge'):
+                    edge_type = edge.get('type')
+                    if edge_type == 'highway.motorway_link':
+                        self.motorway_links.append(edge.get('id'))
+                self.logger.info(f'고속도로 진입로 {len(self.motorway_links)}개를 찾았습니다')
                 
         except Exception as e:
             self.logger.error(f"center 값 설정 중 오류가 발생했습니다: {str(e)}")
             self.logger.error(traceback.format_exc())
-            raise  # 오류를 상위로 전파하여 초기화가 실패하도록 함
+            raise
 
         self.traci_started = False
         self.simulation_step = 0
         self.lock = asyncio.Lock()
 
-    async def _handle_stream(self, stream: asyncio.StreamReader, prefix: str):
-        while True:
-            line = await stream.readline()
-            if not line:
-                break
-            try:
-                decoded_line = line.decode('utf-8').strip()
-            except UnicodeDecodeError:
-                decoded_line = line.decode('cp949', errors='replace').strip()
-            self.logger.info(f"{prefix}: {decoded_line}")
+    async def handle_simulation_control(self, websocket: WebSocket) -> None:
+        """WebSocket 메시지를 직접 처리하고 TraCI 명령을 실행하는 통합 제어 함수"""
+        try:
+            msg = await asyncio.wait_for(websocket.receive_json(), timeout=0.1)
+            self.logger.info(f"제어 메시지 수신: {msg}")
+            
+            control_changed = False
+            
+            if 'simulationSpeed' in msg:
+                new_speed = float(msg['simulationSpeed'])
+                if new_speed != self.simulation_speed:
+                    self.simulation_speed = new_speed
+                    try:
+                        self.control_status["speed_applied"] = True
+                        control_changed = True
+                        self.logger.info(f"시뮬레이션 속도 변경 적용됨: {new_speed}")
+                    except traci.exceptions.TraCIException as e:
+                        self.logger.error(f"속도 변경 실패: {str(e)}")
+                        self.control_status["speed_applied"] = False
+            
+            if 'blockMotorwayLinks' in msg:
+                new_block_state = bool(msg['blockMotorwayLinks'])
+                if new_block_state != self.block_motorway:
+                    self.block_motorway = new_block_state
+                    try:
+                        for edge_id in self.motorway_links:
+                            if new_block_state:
+                                traci.edge.setDisallowed(edge_id, self.carType)
+                            else:
+                                traci.edge.setAllowed(edge_id, self.carType)
+                        self.control_status["block_applied"] = True
+                        control_changed = True
+                        self.logger.info(f"도로 차단 상태 변경 적용됨: {self.block_motorway}")
+                    except traci.exceptions.TraCIException as e:
+                        self.logger.error(f"도로 차단 상태 변경 실패: {str(e)}")
+                        self.control_status["block_applied"] = False
+                        
+            return control_changed
+            
+        except asyncio.TimeoutError:
+            return False
+        except Exception as e:
+            self.logger.error(f"제어 메시지 처리 중 오류: {str(e)}")
+            return False
 
     async def initialize_simulation(self, duration: int, websocket: Optional[WebSocket] = None) -> bool:
+        """시뮬레이션 초기화 함수"""
         try:
             if not self.config_file or not os.path.exists(self.config_file):
                 error_msg = f"시나리오 파일을 찾을 수 없습니다. 경로: {self.config_file}"
@@ -119,72 +173,74 @@ class SimulationRunner:
             return False
 
     async def run_simulation(self, duration: int, websocket: Optional[WebSocket] = None) -> bool:
-        """통합된 시뮬레이션 실행 함수"""
+        """메인 시뮬레이션 실행 함수"""
         async with self.lock:
             try:
                 if not await self.initialize_simulation(duration, websocket):
                     return False
 
                 total_steps = duration
-                last_progress = 0
                 last_vehicle_count = 0
-
+                last_simulation_time = 0
+    
                 while traci.simulation.getMinExpectedNumber() > 0:
-                    traci.simulationStep()
-                    self.simulation_step += 1
+                    try:
+                        # 제어 메시지 처리 및 TraCI 명령 실행
+                        if websocket:
+                            await self.handle_simulation_control(websocket)
+                        current_time = traci.simulation.getTime()
+                        if current_time != last_simulation_time:
+                            traci.simulation.setScale(self.simulation_speed)
+                            last_simulation_time = current_time
 
-                    # 진행률 계산 및 로깅
-                    current_progress = (self.simulation_step * 100) // total_steps
-                    if current_progress >= last_progress + 10:
-                        self.logger.info(f"시뮬레이션 진행률: {current_progress}%")
-                        last_progress = current_progress
+                        # 시뮬레이션 스텝 실행
+                        traci.simulationStep()
+                        
+                        # 차량 정보 수집 및 전송
+                        current_vehicles = traci.vehicle.getIDList()
+                        current_vehicle_count = len(current_vehicles)
 
-                    # 차량 정보 수집 및 전송
-                    current_vehicles = traci.vehicle.getIDList()
-                    current_vehicle_count = len(current_vehicles)
+                        if current_vehicle_count != last_vehicle_count:
+                            self.logger.info(f"현재 차량 수: {current_vehicle_count}")
+                            last_vehicle_count = current_vehicle_count
 
-                    if current_vehicle_count != last_vehicle_count:
-                        self.logger.info(f"현재 차량 수: {current_vehicle_count}")
-                        last_vehicle_count = current_vehicle_count
+                        if websocket:
+                            vehicle_positions = []
+                            for vehicle_id in current_vehicles:
+                                try:
+                                    x, y = traci.vehicle.getPosition(vehicle_id)
+                                    adjusted_x = x + self.center_x
+                                    adjusted_y = y + self.center_y
+                                    longitude, latitude = self.transformer.transform(adjusted_x, adjusted_y)
+                               
+                                    vehicle_positions.append({
+                                        "id": vehicle_id,
+                                        "position": {"lat": latitude, "lng": longitude},
+                                        "type": traci.vehicle.getTypeID(vehicle_id)
+                                    })
+                                except traci.exceptions.TraCIException as e:
+                                    self.logger.error(f"차량 {vehicle_id} 처리 중 오류: {str(e)}")
+                                    continue
 
-                    if websocket:
-                        vehicle_positions = []
-                        for vehicle_id in current_vehicles:
-                            try:
-                                x, y = traci.vehicle.getPosition(vehicle_id)
-                                adjusted_x = x + self.center_x
-                                adjusted_y = y + self.center_y
-                                longitude, latitude = self.transformer.transform(adjusted_x, adjusted_y)
-                            
-                                vehicle_positions.append({
-                                    "id": vehicle_id,
-                                    "position": {"lat": latitude, "lng": longitude},
-                                    "type": traci.vehicle.getTypeID(vehicle_id)
-                                })
-                            except traci.exceptions.TraCIException as e:
-                                self.logger.error(f"차량 {vehicle_id} 처리 중 오류: {str(e)}")
-                                continue
-
-                        try:
-                            await websocket.send_text(json.dumps({
+                            # 차량 위치와 제어 상태 전송
+                            await websocket.send_json({
                                 "type": "vehicle_positions",
                                 "data": vehicle_positions,
-                                "progress": current_progress,
-                                "vehicleCount": current_vehicle_count
-                            }))
-                        except WebSocketDisconnect:
-                            self.logger.warning("WebSocket 연결이 끊어졌습니다")
-                            return False
+                                "progress": ((self.simulation_step * 100) // total_steps),
+                                "vehicleCount": current_vehicle_count,
+                                "controlStatus": self.control_status
+                            })
 
+                    except Exception as step_error:
+                        self.logger.error(f"시뮬레이션 스텝 실행 중 오류: {str(step_error)}")
+                        continue
+
+                    self.simulation_step += 1
                     if self.simulation_step >= duration:
                         break
 
-                # 시뮬레이션 완료 처리
                 if websocket:
-                    try:
-                        await websocket.send_text(json.dumps({"type": "simulation_complete"}))
-                    except Exception as e:
-                        self.logger.error(f"완료 메시지 전송 중 오류: {str(e)}")
+                    await websocket.send_text(json.dumps({"type": "simulation_complete"}))
 
                 return True
 
@@ -207,7 +263,7 @@ class SimulationRunner:
                 await self.cleanup()
 
     async def cleanup(self):
-        """TraCI 연결 정리"""
+        """시뮬레이션 종료 시 정리 작업을 수행하는 함수"""
         try:
             if self.traci_started:
                 self.logger.info("TraCI 연결을 종료합니다")
@@ -217,3 +273,4 @@ class SimulationRunner:
                 self.logger.info("TraCI 연결이 안전하게 종료되었습니다")
         except Exception as e:
             self.logger.error(f"TraCI 종료 중 오류 발생: {str(e)}")
+            self.logger.error(traceback.format_exc())
