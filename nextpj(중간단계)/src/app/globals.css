@@ -115,7 +115,20 @@
   .copyright-link {
     @apply text-white underline;
   }
+
+  .vehicle-overlay {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* 클릭 이벤트를 막음 */
+    z-index: 1000; /* 다른 오버레이보다 위에 표시 */
+  }
+  
+  .vehicle-overlay img {
+    width: 24px;
+    height: 24px;
+  }
 }
+
 
 /* Animation for status bar */
 @keyframes progress {
