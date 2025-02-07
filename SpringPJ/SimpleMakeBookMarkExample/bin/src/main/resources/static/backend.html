@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <form onsubmit="return addBookmarkRequest();">
+        <label>즐겨찾기 이름: </label><input type="text" name="name"><br>
+        <label>즐겨찾기 url: </label><input type="text" name="url"><br>
+        <input type="submit"><br>
+    </form>
+    <button onclick="getBookmarkListRequest();">즐겨찾기 목록 가져오기</button>
+    <ol id="bookmark-list">
+        <!--목록 출력-->
+    </ol>
+
+    <script>
+        function addBookmarkRequest(){
+           const name = document.querySelector('input[name=name]').value;
+           const url = document.querySelector('input[name=url]').value;
+    </script>
+</body>
+</html>
