@@ -38,7 +38,7 @@ public class ShortenUrlRestController {
 	}
 
 	@GetMapping("/{shortenUrlKey}")
-	public ResponseEntity<?> redirectShortenUrl(@PathVariable String shortenUrlKey) throws URISyntaxException {
+	public ResponseEntity<?> redirectShortenUrl(@PathVariable("shortenUrlKey") String shortenUrlKey) throws URISyntaxException {
 		String originalUrl = simpleShortenUrlService.getOriginalUrlByShortenUrlKey(shortenUrlKey);
 
 		return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
@@ -46,7 +46,7 @@ public class ShortenUrlRestController {
 	}
 
 	@GetMapping("/shortenUrl/{shortenUrlKey}")
-	public ResponseEntity<ShortenUrlInformationDto> getShortenUrlInformation(@PathVariable String shortenUrlKey) {
+	public ResponseEntity<ShortenUrlInformationDto> getShortenUrlInformation(@PathVariable("shortenUrlKey") String shortenUrlKey) {
 		ShortenUrlInformationDto shortenUrlInformationDto = simpleShortenUrlService
 				.getShortenUrlInformationByShortenUrlKey(shortenUrlKey);
 		return ResponseEntity.ok(shortenUrlInformationDto);
