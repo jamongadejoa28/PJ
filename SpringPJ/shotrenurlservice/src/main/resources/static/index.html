@@ -8,9 +8,10 @@
 <body>
     <h1>URL 단축 서비스</h1>
     <div>
-        <form onsubmit="return makeShortenUrl();">
+        <!-- form의 onsubmit 제거하고 submit 버튼에 직접 이벤트 추가 -->
+        <form id="shortenUrlForm">
             <input type="url" id="originalUrl" placeholder="단축할 URL을 입력하세요" size="50" required autofocus>
-            <input type="submit" value="단축 URL 생성">
+            <button type="submit">단축 URL 생성</button>
         </form>
         단축된 URl : <span id="generatedUrl"></span>
     </div>
@@ -19,70 +20,77 @@
     <br>
     <h2>단축 URL 정보 조회</h2>
     <div>
-        <form onsubmit="return getShortenUrlInformation();">
+        <!-- form의 onsubmit 제거하고 submit 버튼에 직접 이벤트 추가 -->
+        <form id="urlInfoForm">
             <input type="url" id="shortenUrl" placeholder="정보를 조회할 단축 URL을 입력하세요" size="50" required>
-            <input type="submit" value="단축 URL 정보 조회">
+            <button type="submit">단축 URL 정보 조회</button>
         </form>
         단축 URL 정보 : <span id="shortenUrlInformation"></span>
     </div>
     <script>
-        function makeShortenUrl(){
+        // URL 단축 함수
+        async function makeShortenUrl(event) {
+            // 폼의 기본 제출 동작 방지
+            event.preventDefault();
+            
             const originalUrl = document.querySelector('#originalUrl').value;
-            const requestObject = {originalUrl: originalUrl};
-            const requestJson = JSON.stringify(requestObject);
+            const requestObject = { originalUrl: originalUrl };
 
-            function onReadyStateChange(event){
-                if(ajaxRequest.readyState === XMLHttpRequest.DONE){
-                    if(ajaxRequest.status === 200){
-                        const shortenUrl = JSON.parse(ajaxRequest.responseText);
-                        const completedShortenUrl = window.location.protocol + "//" + window.location.host + "/" +
-                        shortenUrl.shortenUrlKey;
-                        const generatedUrlDom = document.querySelector('#generatedUrl');
-						const link = document.createElement('a');
-                        link.href = completedShortenUrl;
-                        link.textContent = completedShortenUrl;
-                        link.target = '_blank';
-                        generatedUrlDom.appendChild(link);
-                    } else {
-                        console.error('request failed');
-                    }
+            try {
+                const response = await fetch('/shortenUrl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestObject)
+                });
+
+                if (response.ok) {
+                    const shortenUrl = await response.json();
+                    const completedShortenUrl = window.location.protocol + "//" + window.location.host + "/" + shortenUrl.shortenUrlKey;
+                    
+                    const generatedUrlDom = document.querySelector('#generatedUrl');
+                    generatedUrlDom.innerHTML = '';
+                    
+                    const link = document.createElement('a');
+                    link.href = completedShortenUrl;
+                    link.textContent = completedShortenUrl;
+                    link.target = '_blank';
+                    generatedUrlDom.appendChild(link);
+                } else {
+                    console.error('Request failed:', response.status);
                 }
+            } catch (error) {
+                console.error('Error:', error);
             }
-
-            const ajaxRequest = new XMLHttpRequest();
-
-            ajaxRequest.onreadystatechange = onReadyStateChange;
-            ajaxRequest.open('POST', '/shortenUrl');
-            ajaxRequest.setRequestHeader('Content-Type', 'application/json');
-            ajaxRequest.send(requestJson);
-
-            return false;
         }
-		
-        function getShortenUrlInformation(){
+
+        // URL 정보 조회 함수
+        async function getShortenUrlInformation(event) {
+            // 폼의 기본 제출 동작 방지
+            event.preventDefault();
+            
             const shortenUrl = document.querySelector('#shortenUrl').value;
             const shortenUrlKey = shortenUrl.split("/")[3];
 
-            function onReadyStateChange(event){
-                if(ajaxRequest.readyState === XMLHttpRequest.DONE){
-                    if(ajaxRequest.status === 200){
-                        const shortenUrlInformation = JSON.parse(ajaxRequest.responseText);
-                        const shortenUrlInformationDom = document.querySelector('#shortenUrlInformation');
-                        shortenUrlInformationDom.innerHTML = ajaxRequest.responseText;
-                    } else {
-                        console.error('request failed');
-                    }
+            try {
+                const response = await fetch('/shortenUrl/' + shortenUrlKey);
+                
+                if (response.ok) {
+                    const shortenUrlInformation = await response.json();
+                    const shortenUrlInformationDom = document.querySelector('#shortenUrlInformation');
+                    shortenUrlInformationDom.innerHTML = JSON.stringify(shortenUrlInformation);
+                } else {
+                    console.error('Request failed:', response.status);
                 }
+            } catch (error) {
+                console.error('Error:', error);
             }
-
-            const ajaxRequest = new XMLHttpRequest();
-
-            ajaxRequest.onreadystatechange = onReadyStateChange;
-            ajaxRequest.open('GET', '/shortenUrl/' + shortenUrlKey);
-            ajaxRequest.send();
-            
-            return false;
         }
+
+        // 이벤트 리스너 등록
+        document.getElementById('shortenUrlForm').addEventListener('submit', makeShortenUrl);
+        document.getElementById('urlInfoForm').addEventListener('submit', getShortenUrlInformation);
     </script>
 </body>
 </html>
