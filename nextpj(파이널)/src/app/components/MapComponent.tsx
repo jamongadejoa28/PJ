@@ -30,7 +30,7 @@ const MapComponent = forwardRef<MapHandle, MapProps>(({
 
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = "//dapi.kakao.com/v2/maps/sdk.js?appkey=6204e9e81582afd77a86a98ecd921498&libraries=services&autoload=false";
+    script.src = "//dapi.kakao.com/v2/maps/sdk.js?appkey=&libraries=services&autoload=false";
     document.head.appendChild(script);
 
     script.onload = () => {
