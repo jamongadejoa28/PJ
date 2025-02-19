@@ -20,7 +20,7 @@ export default function RootLayout({
       <body>
         <div className="h-full">{children}</div>
         <Script
-          src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=6204e9e81582afd77a86a98ecd921498&libraries=services&autoload=false`}
+          src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=&libraries=services&autoload=false`}
           strategy="beforeInteractive"
         />
       </body>
