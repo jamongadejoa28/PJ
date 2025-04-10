@@ -15,12 +15,7 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
-print(f"Data directory initialized at: {DATA_DIR}")
-
-app.include_router(scenario.router, prefix="/api")
+app.include_router(scenario.router, prefix="/api/scenario") 
 
 if __name__ == "__main__":
     import uvicorn

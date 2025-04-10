@@ -2,55 +2,94 @@
 "use client";
 
 import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
-import "ol/ol.css";
-import { Map, View } from "ol";
-import { OSM } from "ol/source";
-import { Tile as TileLayer } from "ol/layer";
-import { fromLonLat } from "ol/proj";
 
-const MapComponent = forwardRef((props, ref) => {
-  const mapElement = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<Map | null>(null);
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
+
+interface MapProps {
+  onCoordinateSelect?: (lat: number, lng: number, address: string) => void;
+  initialCenter?: { lat: number; lng: number };
+  initialZoom?: number;
+}
+
+interface MapHandle {
+  setView: (lon: number, lat: number) => void;
+  getMap: () => any;
+}
+
+const MapComponent = forwardRef<MapHandle, MapProps>(({
+  onCoordinateSelect,
+  initialCenter = { lat: 37.5665, lng: 126.9780 },
+  initialZoom = 3,
+}, ref) => {
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!mapElement.current) return;
+    const script = document.createElement("script");
+    script.src = "//dapi.kakao.com/v2/maps/sdk.js?appkey=&libraries=services&autoload=false";
+    document.head.appendChild(script);
 
-    const initialMap = new Map({
-      target: mapElement.current,
-      layers: [
-        new TileLayer({
-          source: new OSM(),
-        }),
-      ],
-      view: new View({
-        center: fromLonLat([13.4, 52.52]),
-        zoom: 16,
-      }),
-    });
+    script.onload = () => {
+      window.kakao.maps.load(() => {
+        const container = document.getElementById("map");
+        const options = {
+          center: new window.kakao.maps.LatLng(initialCenter.lat, initialCenter.lng),
+          level: initialZoom
+        };
 
-    mapRef.current = initialMap;
+        const map = new window.kakao.maps.Map(container, options);
+        mapRef.current = map;
 
-    return () => initialMap.setTarget(undefined);
-  }, []);
+        const geocoder = new window.kakao.maps.services.Geocoder();
 
-  // 지도 관련 모든 필요한 메서드들을 노출시킵니다
+        window.kakao.maps.event.addListener(map, 'click', (mouseEvent: any) => {
+          const latlng = mouseEvent.latLng;
+
+          if (markerRef.current) {
+            markerRef.current.setMap(null);
+          }
+
+          const marker = new window.kakao.maps.Marker({
+            position: latlng
+          });
+          marker.setMap(map);
+          markerRef.current = marker;
+
+          geocoder.coord2Address(latlng.getLng(), latlng.getLat(), (result: any, status: any) => {
+            if (status === window.kakao.maps.services.Status.OK && onCoordinateSelect) {
+              onCoordinateSelect(
+                latlng.getLat(),
+                latlng.getLng(),
+                result[0].address.address_name
+              );
+            }
+          });
+        });
+      });
+    };
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, [initialCenter, initialZoom, onCoordinateSelect]);
+
   useImperativeHandle(ref, () => ({
     setView: (lon: number, lat: number) => {
       if (mapRef.current) {
-        const view = mapRef.current.getView();
-        view.setCenter(fromLonLat([lon, lat]));
-        view.setZoom(16);
+        const moveLatLon = new window.kakao.maps.LatLng(lat, lon);
+        mapRef.current.setCenter(moveLatLon);
       }
     },
-    // 선택 영역 변환에 필요한 메서드들 추가
-    getSize: () => mapRef.current?.getSize(),
-    getCoordinateFromPixel: (pixel: [number, number]) =>
-      mapRef.current?.getCoordinateFromPixel(pixel),
-    // 지도 객체 자체도 제공
-    getMap: () => mapRef.current,
+    getMap: () => mapRef.current
   }));
 
-  return <div id="map" ref={mapElement} className="w-full h-full"></div>;
+  return <div id="map" className="w-full h-full" />;
 });
+
+MapComponent.displayName = 'MapComponent';
 
 export default MapComponent;

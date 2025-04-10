@@ -1,72 +1,72 @@
 // src/app/components/Copyright.tsx
 "use client";
 
-const Copyright = () => {
+export default function Copyright() {
   return (
     <div className="p-4">
       <h4 className="text-lg font-semibold mb-2">Icon Copyrights</h4>
-      <div className="images grid grid-cols-2 gap-2 mb-4">
-        <img src="/images/generate.png" alt="Generate Icon" />
-        <img src="/images/passenger.png" alt="Passenger Icon" />
-        <img src="/images/truck.png" alt="Truck Icon" />
-        <img src="/images/bicycle.png" alt="Bicycle Icon" />
+      
+      <div className="images-container">
+        <img src="/images/generate.png" alt="Generate Icon" className="copyright-image" />
+        <img src="/images/passenger.png" alt="Passenger Icon" className="copyright-image" />
+        <img src="/images/truck.png" alt="Truck Icon" className="copyright-image" />
+        <img src="/images/bicycle.png" alt="Bicycle Icon" className="copyright-image" />
       </div>
-      <p className="mb-4">
+      <p className="text-sm mb-4">
         Icons by{" "}
-        <a href="http://google.com/design/" className="underline">
+        <a href="http://google.com/design/" className="copyright-link">
           Google Design
         </a>
         , licensed under{" "}
-        <a
-          href="http://creativecommons.org/licenses/by-sa/3.0/"
-          className="underline"
-        >
+        <a href="http://creativecommons.org/licenses/by-sa/3.0/" className="copyright-link">
           CC-BY-SA
         </a>
       </p>
-      <div className="images grid grid-cols-2 gap-2 mb-4">
-        <img src="/images/bus.png" alt="Bus Icon" />
-        <img src="/images/pedestrian.png" alt="Pedestrian Icon" />
-        <img src="/images/ship.png" alt="Ship Icon" />
-        <img src="/images/rail.png" alt="Rail Icon" />
+
+      <div className="images-container">
+        <img src="/images/bus.png" alt="Bus Icon" className="copyright-image" />
+        <img src="/images/pedestrian.png" alt="Pedestrian Icon" className="copyright-image" />
+        <img src="/images/ship.png" alt="Ship Icon" className="copyright-image" />
+        <img src="/images/rail.png" alt="Rail Icon" className="copyright-image" />
       </div>
-      <p className="mb-4">
+      <p className="text-sm mb-4">
         Icons by{" "}
-        <a href="http://aiga.org/" className="underline">
+        <a href="http://aiga.org/" className="copyright-link">
           AIGA
         </a>
         , Open Domain
       </p>
-      <div className="images grid grid-cols-2 gap-2 mb-4">
-        <img src="/images/tram.png" alt="Tram Icon" />
-        <img src="/images/rail_urban.png" alt="Urban Rail Icon" />
+
+      <div className="images-container">
+        <img src="/images/tram.png" alt="Tram Icon" className="copyright-image" />
+        <img src="/images/rail_urban.png" alt="Urban Rail Icon" className="copyright-image" />
       </div>
-      <p className="mb-4">
+      <p className="text-sm mb-4">
         Icons by{" "}
-        <a href="http://www.danilodemarco.com/" className="underline">
+        <a href="http://www.danilodemarco.com/" className="copyright-link">
           Pittogrammi
         </a>
       </p>
-      <div className="images grid grid-cols-1 gap-2 mb-4">
-        <img src="/images/motorcycle.png" alt="Motorcycle Icon" />
+
+      <div className="images-container">
+        <img src="/images/motorcycle.png" alt="Motorcycle Icon" className="copyright-image" />
       </div>
-      <p className="mb-4">
+      <p className="text-sm mb-4">
         Icon by{" "}
-        <a href="http://icons8.com/" className="underline">
+        <a href="http://icons8.com/" className="copyright-link">
           Icons8
         </a>
       </p>
-      <div className="images grid grid-cols-1 gap-2 mb-4">
-        <img src="/images/road.png" alt="Road Icon" />
+
+      <div className="images-container">
+        <img src="/images/road.png" alt="Road Icon" className="copyright-image" />
       </div>
-      <p className="mb-4">
+      <p className="text-sm mb-4">
         Icon by{" "}
-        <a href="https://www.flaticon.com/" className="underline">
+        <a href="https://www.flaticon.com/" className="copyright-link">
           Flaticon
         </a>
       </p>
     </div>
   );
-};
-
-export default Copyright;
+}

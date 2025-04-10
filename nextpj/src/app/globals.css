@@ -1,4 +1,4 @@
-@import 'ol/ol.css';
+/* */
 
 @tailwind base;
 @tailwind components;
@@ -11,6 +11,22 @@
 }
 
 @layer components {
+  .scenario-button {
+    @apply w-full text-white border-[1.2px] border-[#2C2CA0] cursor-pointer block;
+    @apply bg-[#28A745] font-semibold px-2 py-1 text-sm;
+    background-image: linear-gradient(-180deg, #34D058, #228C3B 90%);
+    --webkit-appearance: none;
+    background-repeat: repeat-x;
+    height: 28px;
+    line-height: 1;  
+  }
+
+  .side {
+    @apply absolute top-0 -right-[250px] w-[250px] h-full transition-[right] duration-200 bg-sumo-primary text-white;
+    z-index: 1000; /* 맵보다 위에 표시되도록 높은 z-index 값 설정 */
+  }
+  
+
   .map {
     @apply w-full h-full absolute top-0 left-0;
   }
@@ -44,8 +60,9 @@
   }
 
   .controls {
-    @apply w-0 h-[calc(100%-55px)] absolute top-[55px] right-0 overflow-x-hidden overflow-y-auto transition-[width] duration-200 invisible;
+    @apply w-0 h-[calc(100%-80px)] absolute top-[80px] right-0 overflow-x-hidden overflow-y-auto transition-[width] duration-200 invisible;
   }
+  
 
   .controls.open {
     @apply w-[250px] visible;
@@ -80,7 +97,7 @@
   }
 
   .status-bar {
-    @apply bg-sumo-secondary rounded m-1 p-1;
+    @apply bg-sumo-secondary rounded p-2 mt-2;
   }
 
   .status-progress {
@@ -98,28 +115,23 @@
   .copyright-link {
     @apply text-white underline;
   }
+
+  .vehicle-overlay {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* 클릭 이벤트를 막음 */
+    z-index: 1000; /* 다른 오버레이보다 위에 표시 */
+  }
+  
+  .vehicle-overlay img {
+    width: 24px;
+    height: 24px;
+  }
 }
+
 
 /* Animation for status bar */
 @keyframes progress {
   0% { width: 0; }
   100% { width: 100%; }
-}
-
-/* Additional styles for OpenLayers map */
-.ol-control {
-  @apply bg-transparent;
-}
-
-.ol-zoom {
-  @apply left-auto right-4;
-}
-
-.ol-zoom .ol-zoom-in,
-.ol-zoom .ol-zoom-out {
-  @apply bg-sumo-secondary text-white border-none rounded hover:bg-sumo-primary;
-}
-
-.ol-attribution {
-  @apply bg-white bg-opacity-70;
 }

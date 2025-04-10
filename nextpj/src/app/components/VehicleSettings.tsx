@@ -1,8 +1,9 @@
+// src/app/components/VehicleSettings.tsx
 "use client";
 
 interface VehicleData {
-  fringeFactor: number;
-  count: number;
+  fringeFactor: number | null;
+  count: number | null;
   enabled: boolean;
 }
 
@@ -35,23 +36,44 @@ export default function VehicleSettings({
   defaultEnabled,
   onChange,
 }: VehicleSettingProps) {
-  // 값이 변경될 때 숫자로 확실하게 변환
-  const handleChange = (field: keyof VehicleData, value: number | boolean) => {
+  const handleChange = (field: keyof VehicleData, value: string | boolean) => {
     if (onChange) {
-      let processedValue = value;
+      let processedValue: number | boolean | null = value;
 
-      // 숫자 타입인 경우 유효성 검사
-      if (typeof value === "number") {
-        if (isNaN(value)) {
-          processedValue = 0; // 기본값 설정
+      // 문자열 값(숫자 입력)을 처리
+      if (typeof value === "string") {
+        // 빈 문자열이면 null로 설정
+        if (value === "") {
+          processedValue = null;
+        } else {
+          const numValue = parseFloat(value);
+          // 숫자가 유효하고 범위 내에 있는지 확인
+          if (!isNaN(numValue)) {
+            if (field === "count") {
+              processedValue = numValue;
+            } else if (field === "fringeFactor") {
+              processedValue = numValue;
+            }
+          } else {
+            return; // 유효하지 않은 숫자면 업데이트하지 않음
+          }
         }
       }
 
       onChange({
-        fringeFactor: defaultFringeFactor,
-        count: defaultCount,
-        enabled: defaultEnabled,
-        [field]: processedValue,
+        fringeFactor:
+          field === "fringeFactor"
+            ? typeof processedValue === "boolean"
+              ? defaultFringeFactor
+              : processedValue
+            : defaultFringeFactor,
+        count:
+          field === "count"
+            ? typeof processedValue === "boolean"
+              ? defaultCount
+              : processedValue
+            : defaultCount,
+        enabled: field === "enabled" ? Boolean(processedValue) : defaultEnabled,
       });
     }
   };
@@ -67,7 +89,6 @@ export default function VehicleSettings({
           />
           {display}
         </h4>
-
         <input
           type="checkbox"
           checked={defaultEnabled}
@@ -75,34 +96,54 @@ export default function VehicleSettings({
           className="checkbox"
         />
       </div>
-
       {defaultEnabled && (
         <div className="options mt-2 space-y-2">
           <label className="option-label">
             Through Traffic Factor
             <input
               type="number"
-              value={defaultFringeFactor.toString()} // 문자열로 변환
-              onChange={(e) =>
-                handleChange("fringeFactor", parseFloat(e.target.value) || 0)
-              }
-              min={0.5}
-              max={100}
+              value={defaultFringeFactor ?? ""}
+              onChange={(e) => handleChange("fringeFactor", e.target.value)}
+              onKeyDown={(e) => {
+                // 직접 입력은 제한 없이 허용
+              }}
+              onMouseDown={(e) => {
+                // 버튼 클릭시에만 min/max 제한 적용
+                const input = e.target as HTMLInputElement;
+                input.min = "0.5";
+                input.max = "100";
+              }}
+              onMouseUp={(e) => {
+                // 버튼 조작이 끝나면 제한 해제
+                const input = e.target as HTMLInputElement;
+                input.removeAttribute("min");
+                input.removeAttribute("max");
+              }}
               step={0.1}
               className="number-input"
             />
           </label>
-
           <label className="option-label">
             Count
             <input
               type="number"
-              value={defaultCount.toString()} // 문자열로 변환
-              onChange={(e) =>
-                handleChange("count", parseFloat(e.target.value) || 0)
-              }
-              min={0.2}
-              max={100}
+              value={defaultCount ?? ""}
+              onChange={(e) => handleChange("count", e.target.value)}
+              onKeyDown={(e) => {
+                // 직접 입력은 제한 없이 허용
+              }}
+              onMouseDown={(e) => {
+                // 버튼 클릭시에만 min/max 제한 적용
+                const input = e.target as HTMLInputElement;
+                input.min = "0.2";
+                input.max = "100";
+              }}
+              onMouseUp={(e) => {
+                // 버튼 조작이 끝나면 제한 해제
+                const input = e.target as HTMLInputElement;
+                input.removeAttribute("min");
+                input.removeAttribute("max");
+              }}
               step={0.1}
               className="number-input"
             />
