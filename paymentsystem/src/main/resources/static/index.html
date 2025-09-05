@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>TossBank 결제 플랫폼 테스트 - UPDATED $(date)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { background: #0066cc; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #0066cc; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0052a3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result { margin-top: 15px; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .hidden { display: none; }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .tab-nav { display: flex; margin-bottom: 20px; }
+        .tab-button { flex: 1; padding: 10px; background: #e9ecef; border: none; cursor: pointer; }
+        .tab-button.active { background: #0066cc; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TossBank 결제 플랫폼 테스트</h1>
+            <p>백엔드 API 기능을 웹 인터페이스로 테스트해보세요</p>
+        </div>
+
+        <!-- 시스템 상태 -->
+        <div class="section">
+            <h2>시스템 상태</h2>
+            <div id="systemStatus">
+                <p><span class="status-indicator status-offline"></span>시스템 상태 확인 중...</p>
+            </div>
+            <button onclick="checkSystemStatus()">상태 새로고침</button>
+        </div>
+
+        <!-- 탭 네비게이션 -->
+        <div class="tab-nav">
+            <button class="tab-button active" onclick="showTab('auth')">인증</button>
+            <button class="tab-button" onclick="showTab('account')">계좌</button>
+            <button class="tab-button" onclick="showTab('payment')">결제</button>
+            <button class="tab-button" onclick="showTab('history')">내역</button>
+            <button class="tab-button" onclick="showTab('monitoring')">모니터링</button>
+        </div>
+
+        <!-- 인증 탭 -->
+        <div id="auth" class="tab-content active">
+            <div class="section">
+                <h3>회원가입</h3>
+                <div class="form-group">
+                    <label>이메일</label>
+                    <input type="email" id="signupEmail" placeholder="test@example.com">
+                </div>
+                <div class="form-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="signupPassword" placeholder="Test123!@#">
+                </div>
+                <div class="form-group">
+                    <label>이름</label>
+                    <input type="text" id="signupName" placeholder="홍길동">
+                </div>
+                <div class="form-group">
+                    <label>전화번호</label>
+                    <input type="text" id="signupPhone" placeholder="010-1234-5678">
+                </div>
+                <button onclick="signup()">회원가입</button>
+                <div id="signupResult" class="result hidden"></div>
+            </div>
+
+            <div class="section">
+                <h3>로그인</h3>
+                <div class="form-group">
+                    <label>이메일</label>
+                    <input type="email" id="loginEmail" placeholder="test@example.com">
+                </div>
+                <div class="form-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="loginPassword" placeholder="Test123!@#">
+                </div>
+                <button onclick="login()">로그인</button>
+                <div id="loginResult" class="result hidden"></div>
+            </div>
+        </div>
+
+        <!-- 계좌 탭 -->
+        <div id="account" class="tab-content">
+            <div class="section">
+                <h3>계좌 생성</h3>
+                <div class="form-group">
+                    <label>계좌명</label>
+                    <input type="text" id="accountName" placeholder="테스트 계좌">
+                </div>
+                <div class="form-group">
+                    <label>계좌 타입</label>
+                    <select id="accountType">
+                        <option value="CHECKING">입출금 통장</option>
+                        <option value="SAVINGS">적금</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>일일 한도</label>
+                    <input type="number" id="dailyLimit" value="1000000">
+                </div>
+                <button onclick="createAccount()">계좌 생성</button>
+                <div id="accountResult" class="result hidden"></div>
+            </div>
+
+            <div class="section">
+                <h3>계좌 입금</h3>
+                <div class="form-group">
+                    <label>계좌 선택</label>
+                    <select id="depositAccountId">
+                        <option value="">계좌를 선택하세요</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>입금액</label>
+                    <input type="number" id="depositAmount" value="100000">
+                </div>
+                <button onclick="deposit()">입금</button>
+                <div id="depositResult" class="result hidden"></div>
+            </div>
+        </div>
+
+        <!-- 결제 탭 -->
+        <div id="payment" class="tab-content">
+            <div class="section">
+                <h3>결제하기</h3>
+                <div class="form-group">
+                    <label>계좌 선택</label>
+                    <select id="paymentAccountId">
+                        <option value="">계좌를 선택하세요</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>가맹점</label>
+                    <select id="merchantCode">
+                        <option value="TOSS_STORE_001">토스 스토어</option>
+                        <option value="TOSS_CAFE_002">토스 카페</option>
+                        <option value="TOSS_MART_003">토스 마트</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>결제 수단</label>
+                    <select id="paymentMethod">
+                        <option value="ACCOUNT_TRANSFER">계좌이체</option>
+                        <option value="TOSS_PAY">토스페이</option>
+                        <option value="CARD">카드</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>결제 금액</label>
+                    <input type="number" id="paymentAmount" value="10000">
+                </div>
+                <div class="form-group">
+                    <label>결제 설명</label>
+                    <input type="text" id="paymentDescription" placeholder="테스트 결제">
+                </div>
+                <button onclick="processPayment()">결제하기</button>
+                <div id="paymentResult" class="result hidden"></div>
+            </div>
+        </div>
+
+        <!-- 내역 탭 -->
+        <div id="history" class="tab-content">
+            <div class="section">
+                <h3>결제 내역</h3>
+                <button onclick="getPaymentHistory()">내역 조회</button>
+                <div id="historyResult"></div>
+            </div>
+        </div>
+
+        <!-- 모니터링 탭 -->
+        <div id="monitoring" class="tab-content">
+            <div class="section">
+                <h3>시스템 모니터링</h3>
+                <button onclick="getMonitoringData()">모니터링 데이터 조회</button>
+                <div id="monitoringResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let userAccounts = [];
+
+        // 탭 전환
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 시스템 상태 확인
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/actuator/health');
+                const data = await response.json();
+                const indicator = document.querySelector('.status-indicator');
+                const statusText = document.getElementById('systemStatus');
+                
+                if (data.status === 'UP') {
+                    indicator.className = 'status-indicator status-online';
+                    statusText.innerHTML = '<p><span class="status-indicator status-online"></span>시스템이 정상 동작 중입니다</p>';
+                } else {
+                    indicator.className = 'status-indicator status-offline';
+                    statusText.innerHTML = '<p><span class="status-indicator status-offline"></span>시스템에 문제가 있습니다</p>';
+                }
+            } catch (error) {
+                const statusText = document.getElementById('systemStatus');
+                statusText.innerHTML = '<p><span class="status-indicator status-offline"></span>시스템 연결 실패</p>';
+            }
+        }
+
+        // API 호출 헬퍼
+        async function apiCall(endpoint, method = 'GET', data = null, requiresAuth = false) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (requiresAuth && authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            
+            const config = {
+                method,
+                headers
+            };
+            
+            if (data) {
+                config.body = JSON.stringify(data);
+            }
+            
+            const response = await fetch(endpoint, config);
+            return await response.json();
+        }
+
+        // 회원가입
+        async function signup() {
+            const data = {
+                email: document.getElementById('signupEmail').value,
+                password: document.getElementById('signupPassword').value,
+                name: document.getElementById('signupName').value,
+                phoneNumber: document.getElementById('signupPhone').value
+            };
+            
+            try {
+                const result = await apiCall('/auth/signup', 'POST', data);
+                showResult('signupResult', result);
+            } catch (error) {
+                showResult('signupResult', { success: false, message: '회원가입 실패: ' + error.message }, 'error');
+            }
+        }
+
+        // 로그인
+        async function login() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+            
+            try {
+                const result = await apiCall('/auth/signin', 'POST', data);
+                if (result.success && result.data && result.data.accessToken) {
+                    authToken = result.data.accessToken;
+                    showResult('loginResult', result);
+                    loadUserAccounts();
+                } else {
+                    showResult('loginResult', result, 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', { success: false, message: '로그인 실패: ' + error.message }, 'error');
+            }
+        }
+
+        // 계좌 목록 로드
+        async function loadUserAccounts() {
+            if (!authToken) return;
+            
+            try {
+                const result = await apiCall('/accounts', 'GET', null, true);
+                if (result.success && result.data) {
+                    userAccounts = result.data;
+                    updateAccountSelects();
+                }
+            } catch (error) {
+                console.error('계좌 목록 로드 실패:', error);
+            }
+        }
+
+        // 계좌 선택 옵션 업데이트
+        function updateAccountSelects() {
+            const selects = ['depositAccountId', 'paymentAccountId'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">계좌를 선택하세요</option>';
+                
+                userAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+                    option.textContent = `${account.accountName} (잔액: ₩${account.balance.toLocaleString()})`;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // 계좌 생성
+        async function createAccount() {
+            if (!authToken) {
+                showResult('accountResult', { success: false, message: '로그인이 필요합니다' }, 'error');
+                return;
+            }
+            
+            const data = {
+                accountName: document.getElementById('accountName').value,
+                accountType: document.getElementById('accountType').value,
+                dailyLimit: parseInt(document.getElementById('dailyLimit').value),
+                monthlyLimit: parseInt(document.getElementById('dailyLimit').value) * 30
+            };
+            
+            try {
+                const result = await apiCall('/accounts', 'POST', data, true);
+                showResult('accountResult', result);
+                if (result.success) {
+                    loadUserAccounts();
+                }
+            } catch (error) {
+                showResult('accountResult', { success: false, message: '계좌 생성 실패: ' + error.message }, 'error');
+            }
+        }
+
+        // 입금
+        async function deposit() {
+            if (!authToken) {
+                showResult('depositResult', { success: false, message: '로그인이 필요합니다' }, 'error');
+                return;
+            }
+            
+            const accountId = document.getElementById('depositAccountId').value;
+            const amount = parseInt(document.getElementById('depositAmount').value);
+            
+            if (!accountId) {
+                showResult('depositResult', { success: false, message: '계좌를 선택해주세요' }, 'error');
+                return;
+            }
+            
+            const data = {
+                amount: amount,
+                memo: '테스트 입금'
+            };
+            
+            try {
+                const result = await apiCall(`/accounts/${accountId}/deposit`, 'POST', data, true);
+                showResult('depositResult', result);
+                if (result.success) {
+                    loadUserAccounts();
+                }
+            } catch (error) {
+                showResult('depositResult', { success: false, message: '입금 실패: ' + error.message }, 'error');
+            }
+        }
+
+        // 결제 처리
+        async function processPayment() {
+            if (!authToken) {
+                showResult('paymentResult', { success: false, message: '로그인이 필요합니다' }, 'error');
+                return;
+            }
+            
+            const accountId = document.getElementById('paymentAccountId').value;
+            const amount = parseInt(document.getElementById('paymentAmount').value);
+            
+            if (!accountId) {
+                showResult('paymentResult', { success: false, message: '계좌를 선택해주세요' }, 'error');
+                return;
+            }
+            
+            const data = {
+                accountId: parseInt(accountId),
+                merchantCode: document.getElementById('merchantCode').value,
+                merchantOrderId: 'WEB_TEST_' + Date.now(),
+                amount: amount,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                description: document.getElementById('paymentDescription').value
+            };
+            
+            try {
+                const result = await apiCall('/payments', 'POST', data, true);
+                showResult('paymentResult', result);
+                if (result.success) {
+                    loadUserAccounts();
+                }
+            } catch (error) {
+                showResult('paymentResult', { success: false, message: '결제 실패: ' + error.message }, 'error');
+            }
+        }
+
+        // 결제 내역 조회
+        async function getPaymentHistory() {
+            if (!authToken) {
+                document.getElementById('historyResult').innerHTML = '<p class="error">로그인이 필요합니다</p>';
+                return;
+            }
+            
+            try {
+                const result = await apiCall('/payments', 'GET', null, true);
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    let tableHtml = '<table><tr><th>거래ID</th><th>가맹점</th><th>금액</th><th>결제수단</th><th>상태</th><th>일시</th></tr>';
+                    
+                    result.data.forEach(payment => {
+                        tableHtml += `
+                            <tr>
+                                <td>${payment.transactionId}</td>
+                                <td>${payment.merchantName}</td>
+                                <td>₩${payment.amount.toLocaleString()}</td>
+                                <td>${payment.paymentMethod}</td>
+                                <td>${payment.status}</td>
+                                <td>${new Date(payment.createdAt).toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHtml += '</table>';
+                    document.getElementById('historyResult').innerHTML = tableHtml;
+                } else {
+                    document.getElementById('historyResult').innerHTML = '<p class="info">결제 내역이 없습니다</p>';
+                }
+            } catch (error) {
+                document.getElementById('historyResult').innerHTML = '<p class="error">내역 조회 실패: ' + error.message + '</p>';
+            }
+        }
+
+        // 모니터링 데이터 조회
+        async function getMonitoringData() {
+            try {
+                const result = await apiCall('/admin/monitoring/stats');
+                
+                let html = '<div class="info">';
+                html += `<p><strong>일일 결제 건수:</strong> ${result.daily_payments || 0}건</p>`;
+                html += `<p><strong>일일 매출:</strong> ₩${(result.daily_revenue || 0).toLocaleString()}</p>`;
+                html += `<p><strong>성공률:</strong> ${result.success_rate || '0%'}</p>`;
+                html += `<p><strong>전체 요청 수:</strong> ${result.total_requests || 0}건</p>`;
+                html += '</div>';
+                
+                document.getElementById('monitoringResult').innerHTML = html;
+            } catch (error) {
+                document.getElementById('monitoringResult').innerHTML = '<p class="error">모니터링 데이터 조회 실패: ' + error.message + '</p>';
+            }
+        }
+
+        // 결과 표시
+        function showResult(elementId, result, type = null) {
+            const element = document.getElementById(elementId);
+            element.classList.remove('hidden', 'success', 'error', 'info');
+            
+            if (type) {
+                element.classList.add(type);
+            } else if (result.success) {
+                element.classList.add('success');
+            } else {
+                element.classList.add('error');
+            }
+            
+            element.innerHTML = `<p>${result.message || JSON.stringify(result)}</p>`;
+        }
+
+        // 페이지 로드 시 시스템 상태 확인
+        window.onload = function() {
+            checkSystemStatus();
+        };
+    </script>
+</body>
+</html>
